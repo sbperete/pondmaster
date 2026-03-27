@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="#1A5276"/>
+
+  <!-- Water ripple arcs (bottom third) -->
+  <path d="M 100 340 Q 176 310 256 340 Q 336 370 412 340" stroke="rgba(255,255,255,0.4)" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <path d="M 130 365 Q 193 340 256 365 Q 319 390 382 365" stroke="rgba(255,255,255,0.25)" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+  <!-- Fish body (jumping upward, tilted) -->
+  <!-- Main body ellipse, rotated -30deg around center -->
+  <g transform="translate(256,220) rotate(-30)">
+    <!-- Body -->
+    <ellipse cx="0" cy="0" rx="80" ry="38" fill="white"/>
+    <!-- Tail fin (left side) -->
+    <path d="M -80 0 L -120 -35 L -110 10 L -80 0 Z" fill="white"/>
+    <!-- Top fin -->
+    <path d="M 20 -38 L 45 -70 L 55 -38 Z" fill="white"/>
+    <!-- Eye -->
+    <circle cx="60" cy="-8" r="8" fill="#1A5276"/>
+    <circle cx="63" cy="-10" r="3" fill="white"/>
+    <!-- Mouth -->
+    <path d="M 78 0 Q 82 6 78 10" stroke="#1A5276" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- Water splash drops -->
+  <circle cx="195" cy="295" r="5" fill="rgba(255,255,255,0.6)"/>
+  <circle cx="315" cy="288" r="4" fill="rgba(255,255,255,0.5)"/>
+  <circle cx="240" cy="275" r="3" fill="rgba(255,255,255,0.4)"/>
+</svg>

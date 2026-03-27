@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Demo — PondMaster</title>
+  <meta name="description" content="Try PondMaster demo — tilapia pond management with 3 sample ponds">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1A5276">
+</head>
+<body>
+
+<div class="demo-banner" style="position:sticky;top:0;z-index:200;background:var(--accent-orange);color:white;text-align:center;padding:10px 16px;font-size:14px;display:flex;align-items:center;justify-content:center;gap:12px">
+  <span>🔬 <strong>Demo mode</strong> — your changes are not saved</span>
+  <a href="auth.html?mode=register" style="color:white;font-weight:700;text-decoration:underline;white-space:nowrap">Create Free Account →</a>
+</div>
+
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div style="padding:20px 16px;display:flex;align-items:center;gap:10px">
+      <svg width="32" height="32" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#1A5276"/><ellipse cx="50" cy="48" rx="28" ry="14" fill="white"/><polygon points="22,48 8,36 8,60" fill="white"/></svg>
+      <span style="font-weight:700;font-size:16px;color:var(--text-nav)">PondMaster</span>
+    </div>
+    <nav><ul class="sidebar-nav">
+      <li><a href="#" class="active">🏠 Dashboard</a></li>
+      <li><a href="calendar.html">📅 Calendar</a></li>
+      <li><a href="auth.html?mode=register">✨ Create Account</a></li>
+    </ul></nav>
+    <div style="padding:16px;margin-top:auto;font-size:13px;color:rgba(255,255,255,0.6)">
+      <div>Demo Farmer</div>
+      <div>Mbwadzulu Demo Farm</div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="top-bar">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')" style="background:none;border:none;font-size:20px;cursor:pointer;margin-right:12px">☰</button>
+      <span style="font-weight:700;font-size:17px">Dashboard</span>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:12px">
+        <button class="theme-toggle" style="background:none;border:1px solid var(--border);border-radius:20px;padding:6px 12px;cursor:pointer;font-size:14px">🌙</button>
+      </div>
+    </div>
+
+    <!-- Summary cards -->
+    <div style="padding:16px">
+      <div class="card-grid" id="summary-cards" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px">
+        <div class="metric-card card"><div style="font-size:22px;font-weight:700;color:var(--accent-blue)">32,400</div><div style="font-size:12px;color:var(--text-muted)">Total Fish Stocked</div></div>
+        <div class="metric-card card"><div style="font-size:22px;font-weight:700;color:var(--accent-orange)">28 days</div><div style="font-size:12px;color:var(--text-muted)">Next Harvest</div></div>
+        <div class="metric-card card"><div id="weekly-feed-display" style="font-size:22px;font-weight:700;color:var(--accent-green)">MWK —</div><div style="font-size:12px;color:var(--text-muted)">Feed Cost This Week</div></div>
+        <div class="metric-card card"><div id="revenue-display" style="font-size:22px;font-weight:700;color:var(--accent-green)">MWK —</div><div style="font-size:12px;color:var(--text-muted)">Projected Revenue</div></div>
+      </div>
+
+      <!-- Alerts -->
+      <div id="demo-alerts" style="margin-bottom:16px"></div>
+
+      <!-- Pond cards -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h2 style="font-size:16px;font-weight:700">Your Ponds</h2>
+        <span style="font-size:13px;color:var(--text-muted)">3 of 3 ponds used</span>
+      </div>
+      <div class="card-grid" id="demo-pond-cards"></div>
+
+      <div style="margin-top:24px;padding:20px;background:var(--bg-card);border-radius:12px;border:1px solid var(--border);text-align:center">
+        <div style="font-size:28px;margin-bottom:8px">🚀</div>
+        <div style="font-weight:700;margin-bottom:6px">Ready to use with your real farm?</div>
+        <div style="font-size:14px;color:var(--text-secondary);margin-bottom:16px">Create a free account to save your data and start tracking your actual ponds.</div>
+        <a href="auth.html?mode=register" style="display:inline-block;padding:12px 28px;background:var(--accent-green);color:white;border-radius:8px;text-decoration:none;font-weight:700">Start Free Account</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom nav -->
+<nav class="bottom-nav">
+  <a href="#" class="active" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;text-decoration:none;color:var(--accent-blue);font-size:11px"><span style="font-size:20px">🏠</span>Home</a>
+  <a href="calendar.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;text-decoration:none;color:var(--text-muted);font-size:11px"><span style="font-size:20px">📅</span>Calendar</a>
+  <a href="auth.html?mode=register" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;text-decoration:none;color:var(--text-muted);font-size:11px"><span style="font-size:20px">⚙️</span>Settings</a>
+</nav>
+
+<script src="config.js" defer></script>
+<script src="js/theme.js" defer></script>
+<script src="js/growth.js" defer></script>
+<script src="js/demo-data.js" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Wait for growth.js
+  setTimeout(renderDemo, 200);
+});
+
+function renderDemo() {
+  const ponds = window.DEMO_DATA.ponds;
+  const lots = window.DEMO_DATA.lots;
+  const logs = window.DEMO_DATA.logs;
+  const health = window.DEMO_DATA.healthEvents;
+
+  // Pond cards
+  const grid = document.getElementById('demo-pond-cards');
+  if (grid) {
+    grid.innerHTML = ponds.map(pond => {
+      const lot = lots[pond.id]?.[0];
+      const daysIn = lot ? Math.floor((Date.now() - new Date(lot.stocking_date)) / 86400000) : 0;
+      const weeks = Math.floor(daysIn / 7);
+      const estWeight = lot && window.PondGrowth ? Math.round(window.PondGrowth.estimateCurrentWeight(lot.stocking_date, new Date())) : 0;
+      const daysToHarvest = lot?.target_harvest_date ? Math.round((new Date(lot.target_harvest_date) - Date.now()) / 86400000) : null;
+      return `<div class="card pond-card" onclick="window.location.href='auth.html?mode=register'" style="cursor:pointer">
+        <div class="flex flex-between mb-8">
+          <strong>${pond.pond_name}</strong>
+          <span class="badge badge-active">active</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">
+          ${pond.length_m}×${pond.width_m}×${pond.depth_m}m · ${pond.volume_m3} m³
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+          <div><div style="color:var(--text-muted);font-size:11px">Week</div><div style="font-weight:600">${weeks}</div></div>
+          <div><div style="color:var(--text-muted);font-size:11px">Est weight</div><div style="font-weight:600;color:var(--accent-green)">${estWeight}g</div></div>
+          <div><div style="color:var(--text-muted);font-size:11px">Stocked</div><div style="font-weight:600">${lot?.fingerlings_stocked?.toLocaleString() || '—'}</div></div>
+          <div><div style="color:var(--text-muted);font-size:11px">Harvest</div><div style="font-weight:600;color:${daysToHarvest < 0 ? 'var(--alert-red)' : 'var(--accent-orange)'}">${daysToHarvest !== null ? (daysToHarvest < 0 ? 'Overdue!' : daysToHarvest + 'd') : '—'}</div></div>
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:var(--accent-blue)">Tap to create account and manage →</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Alerts
+  const alertsEl = document.getElementById('demo-alerts');
+  if (alertsEl) {
+    let html = '';
+    Object.entries(health).forEach(([pondId, events]) => {
+      const pond = ponds.find(p => p.id === pondId);
+      events.filter(e => !e.resolved_date).forEach(ev => {
+        html += `<div class="card" style="border-left:4px solid var(--alert-red);margin-bottom:8px">
+          <div class="flex flex-between"><strong style="color:var(--alert-red)">${ev.severity}: ${ev.event_type}</strong><span class="text-muted" style="font-size:12px">${pond?.pond_name}</span></div>
+          <div class="text-secondary" style="font-size:13px;margin-top:4px">${ev.symptoms}</div>
+        </div>`;
+      });
+    });
+    alertsEl.innerHTML = html;
+  }
+
+  // Summary: projected revenue (Pond C pre-harvest)
+  if (window.PondGrowth) {
+    const lot = lots['demo-pond-c']?.[0];
+    if (lot) {
+      const proj = window.PondGrowth.projectHarvestRevenue(lot.stocking_date, lot.fingerlings_stocked, 120, 15000);
+      const el = document.getElementById('revenue-display');
+      if (el) el.textContent = window.PondGrowth.formatMWK(proj.at7months.grossRevenue);
+    }
+    const wfEl = document.getElementById('weekly-feed-display');
+    if (wfEl) {
+      const totalWeeklyFeed = ponds.reduce((sum, pond) => {
+        const pLogs = logs[pond.id] || [];
+        const weekAgo = new Date(Date.now() - 7*86400000).toISOString().split('T')[0];
+        return sum + pLogs.filter(l => l.log_date >= weekAgo).reduce((s,l) => s + (l.feed_cost_mwk||0), 0);
+      }, 0);
+      wfEl.textContent = window.PondGrowth.formatMWK(totalWeeklyFeed);
+    }
+  }
+}
+</script>
+</body>
+</html>

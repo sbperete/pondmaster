@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Share — PondMaster</title>
+  <link rel="stylesheet" href="css/style.css">
+  <meta name="theme-color" content="#1A5276">
+</head>
+<body>
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
+  <div class="card" style="max-width:480px;width:100%;text-align:center">
+    <div style="font-size:40px;margin-bottom:16px">🐟</div>
+    <h1 style="font-size:20px;font-weight:700;margin-bottom:8px">PondMaster</h1>
+    <p id="share-status" style="color:var(--text-secondary);margin-bottom:24px">Processing shared content…</p>
+
+    <div id="share-content" style="background:var(--bg-input);border-radius:8px;padding:12px;margin-bottom:20px;text-align:left;display:none">
+      <div id="share-title" style="font-weight:600;margin-bottom:4px"></div>
+      <div id="share-text" style="font-size:13px;color:var(--text-secondary);margin-bottom:4px"></div>
+      <div id="share-url" style="font-size:12px;color:var(--accent-blue);word-break:break-all"></div>
+    </div>
+
+    <div id="action-buttons" style="display:none;flex-direction:column;gap:10px">
+      <button id="btn-log-note" onclick="saveAsNote()" class="btn btn-primary btn-full">📝 Save as pond note</button>
+      <button id="btn-ask-ai" onclick="askAI()" class="btn btn-secondary btn-full">🤖 Ask AI advisor</button>
+      <a href="dashboard.html" class="btn btn-secondary btn-full" style="text-decoration:none;display:block">🏠 Go to dashboard</a>
+    </div>
+
+    <div id="loading-spinner" style="padding:16px">
+      <div style="width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent-blue);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="config.js" defer></script>
+<script src="js/theme.js" defer></script>
+<script src="js/supabase.js" defer></script>
+<script src="js/app.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+<script>
+let sharedTitle = '', sharedText = '', sharedUrl = '';
+
+async function init() {
+  // Parse share_target POST params (service worker writes them to URL)
+  const params = new URLSearchParams(window.location.search);
+  sharedTitle = params.get('title') || '';
+  sharedText  = params.get('text')  || '';
+  sharedUrl   = params.get('url')   || '';
+
+  document.getElementById('loading-spinner').style.display = 'none';
+
+  if (!sharedTitle && !sharedText && !sharedUrl) {
+    document.getElementById('share-status').textContent = 'No content was shared.';
+    document.getElementById('action-buttons').style.display = 'flex';
+    return;
+  }
+
+  // Show content preview
+  const contentDiv = document.getElementById('share-content');
+  contentDiv.style.display = 'block';
+  if (sharedTitle) document.getElementById('share-title').textContent = sharedTitle;
+  if (sharedText)  document.getElementById('share-text').textContent  = sharedText;
+  if (sharedUrl)   document.getElementById('share-url').textContent   = sharedUrl;
+
+  document.getElementById('share-status').textContent = 'What would you like to do with this?';
+  document.getElementById('action-buttons').style.display = 'flex';
+}
+
+async function saveAsNote() {
+  const { data: { user } } = await (window.supabaseClient?.auth.getUser() || Promise.resolve({ data: {} }));
+  if (!user) { window.location.href = 'auth.html'; return; }
+
+  try {
+    const ponds = await window.PondDB.getPonds(user.id);
+    if (!ponds.length) { window.PondApp?.showToast('Add a pond first','warning'); return; }
+
+    // Save to most recently active pond's daily log as a note
+    const pond = ponds[0];
+    const today = new Date().toISOString().split('T')[0];
+    const noteText = [sharedTitle, sharedText, sharedUrl].filter(Boolean).join('\n');
+    await window.PondDB.addLog({
+      pond_id: pond.id,
+      log_date: today,
+      notes: noteText,
+      logged_by: user.email
+    });
+    window.PondApp?.showToast('Saved as note to ' + pond.pond_name, 'success');
+    setTimeout(() => window.location.href = 'pond.html?id=' + pond.id, 1200);
+  } catch(e) {
+    window.PondApp?.showToast('Could not save note', 'error');
+  }
+}
+
+function askAI() {
+  const query = encodeURIComponent([sharedTitle, sharedText, sharedUrl].filter(Boolean).join(' '));
+  window.location.href = 'pond.html?tab=chat&q=' + query;
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

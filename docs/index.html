@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PondMaster — Tilapia Pond Management for African Farmers</title>
+  <meta name="description" content="Manage every pond. Track every fish. Harvest maximum profit. Built for tilapia farmers in Malawi, Zambia & Zimbabwe — works offline on 2G." />
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#1A5276" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PondMaster" />
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Apple Touch Icon -->
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('sw.js').catch(function (err) {
+          console.warn('SW registration failed:', err);
+        });
+      });
+    }
+  </script>
+
+  <style>
+    /* ── Design System Tokens ───────────────────────────────────────────── */
+    :root {
+      /* Light theme defaults */
+      --bg-primary: #F8F9FA;
+      --bg-secondary: #FFFFFF;
+      --bg-card: #FFFFFF;
+      --text-primary: #1A1A2E;
+      --text-secondary: #4A5568;
+      --text-muted: #718096;
+      --accent-blue: #1A5276;
+      --accent-green: #1E8449;
+      --accent-orange: #E67E22;
+      --border-color: #E2E8F0;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --radius-pill: 9999px;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    }
+
+    [data-theme="dark"] {
+      --bg-primary: #0D1117;
+      --bg-secondary: #161B22;
+      --bg-card: #1C2128;
+      --text-primary: #E6EDF3;
+      --text-secondary: #8B949E;
+      --text-muted: #6E7681;
+      --accent-blue: #58A6FF;
+      --accent-green: #3FB950;
+      --accent-orange: #F0883E;
+      --border-color: #30363D;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.30);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.40);
+    }
+
+    /* ── Reset & Base ───────────────────────────────────────────────────── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-size: 16px;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      overflow-x: hidden;
+    }
+
+    a {
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    img, svg {
+      display: block;
+    }
+
+    /* ── Layout Utilities ───────────────────────────────────────────────── */
+    .container {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────────────── */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background-color: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      padding: 0 16px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* Logo */
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .logo:hover {
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background-color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background-color 0.25s ease;
+    }
+
+    .logo-text {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      transition: color 0.25s ease;
+    }
+
+    /* Header right side */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-signin {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--accent-blue);
+      padding: 6px 14px;
+      border: 1.5px solid var(--accent-blue);
+      border-radius: var(--radius-pill);
+      transition: background-color 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-signin:hover {
+      background-color: var(--accent-blue);
+      color: #ffffff;
+      text-decoration: none;
+    }
+
+    /* Theme toggle — floating pill */
+    #theme-toggle {
+      position: fixed;
+      top: 12px;
+      right: 16px;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background-color: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-md);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+      white-space: nowrap;
+    }
+
+    #theme-toggle:hover {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.20);
+    }
+
+    #theme-toggle .toggle-icon {
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    /* ── Hero ────────────────────────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(160deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+      padding: 56px 16px 48px;
+      text-align: center;
+      border-bottom: 1px solid var(--border-color);
+      transition: background 0.25s ease, border-color 0.25s ease;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-green);
+      background-color: rgba(63, 185, 80, 0.12);
+      padding: 4px 12px;
+      border-radius: var(--radius-pill);
+      margin-bottom: 20px;
+    }
+
+    [data-theme="light"] .hero-eyebrow {
+      background-color: rgba(30, 132, 73, 0.10);
+    }
+
+    .hero-headline {
+      font-size: clamp(1.75rem, 6vw, 2.75rem);
+      font-weight: 800;
+      line-height: 1.18;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+      margin-bottom: 18px;
+      max-width: 680px;
+      margin-left: auto;
+      margin-right: auto;
+      transition: color 0.25s ease;
+    }
+
+    .hero-headline .highlight-green {
+      color: var(--accent-green);
+    }
+
+    .hero-headline .highlight-blue {
+      color: var(--accent-blue);
+    }
+
+    .hero-sub {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      max-width: 480px;
+      margin: 0 auto 32px;
+      line-height: 1.7;
+      transition: color 0.25s ease;
+    }
+
+    .hero-ctas {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 14px 28px;
+      background-color: var(--accent-green);
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: var(--radius-pill);
+      box-shadow: 0 4px 14px rgba(63, 185, 80, 0.35);
+      transition: filter 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(63, 185, 80, 0.45);
+      text-decoration: none;
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 13px 28px;
+      background-color: transparent;
+      color: var(--text-primary);
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: var(--radius-pill);
+      border: 1.5px solid var(--border-color);
+      transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+      background-color: rgba(88, 166, 255, 0.06);
+      text-decoration: none;
+    }
+
+    /* ── Features ────────────────────────────────────────────────────────── */
+    .features-section {
+      padding: 48px 0 40px;
+    }
+
+    .section-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-align: center;
+      margin-bottom: 28px;
+      padding: 0 16px;
+      transition: color 0.25s ease;
+    }
+
+    .features-scroll-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      padding: 4px 16px 16px;
+      display: flex;
+      gap: 14px;
+    }
+
+    .features-scroll-wrapper::-webkit-scrollbar {
+      display: none;
+    }
+
+    .feature-card {
+      flex: 0 0 260px;
+      scroll-snap-align: start;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 24px 20px;
+      box-shadow: var(--shadow-sm);
+      transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .feature-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .feature-icon {
+      font-size: 2rem;
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+
+    .feature-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      transition: color 0.25s ease;
+    }
+
+    .feature-desc {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      transition: color 0.25s ease;
+    }
+
+    /* Scroll hint indicator (mobile) */
+    .scroll-hint {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      padding-bottom: 4px;
+      transition: color 0.25s ease;
+    }
+
+    @media (min-width: 640px) {
+      .features-scroll-wrapper {
+        flex-wrap: wrap;
+        overflow-x: visible;
+        scroll-snap-type: none;
+        justify-content: center;
+      }
+      .feature-card {
+        flex: 0 0 calc(33.333% - 10px);
+        max-width: 260px;
+      }
+      .scroll-hint {
+        display: none;
+      }
+    }
+
+    /* ── Stats Bar ───────────────────────────────────────────────────────── */
+    .stats-bar {
+      background-color: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px;
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+
+    .stats-inner {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 24px;
+      justify-content: center;
+      align-items: center;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      transition: color 0.25s ease;
+    }
+
+    .stat-item::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--accent-green);
+      flex-shrink: 0;
+    }
+
+    /* ── Install Banner ──────────────────────────────────────────────────── */
+    #install-banner {
+      display: none;
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      z-index: 150;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      padding: 14px 16px;
+      max-width: 480px;
+      margin: 0 auto;
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+
+    #install-banner.visible {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .install-banner-text {
+      flex: 1;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      transition: color 0.25s ease;
+    }
+
+    .btn-install {
+      flex-shrink: 0;
+      padding: 8px 16px;
+      background-color: var(--accent-blue);
+      color: #ffffff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border-radius: var(--radius-pill);
+      border: none;
+      cursor: pointer;
+      transition: filter 0.2s ease;
+    }
+
+    .btn-install:hover {
+      filter: brightness(1.12);
+    }
+
+    .btn-dismiss {
+      flex-shrink: 0;
+      background: none;
+      border: none;
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+      transition: color 0.2s ease;
+    }
+
+    .btn-dismiss:hover {
+      color: var(--text-primary);
+    }
+
+    /* ── Footer ──────────────────────────────────────────────────────────── */
+    .site-footer {
+      background-color: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+      padding: 28px 16px;
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+
+    .footer-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: center;
+      text-align: center;
+    }
+
+    .footer-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 20px;
+      justify-content: center;
+      list-style: none;
+    }
+
+    .footer-nav a {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      transition: color 0.2s ease;
+    }
+
+    .footer-nav a:hover {
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    .footer-copy {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      transition: color 0.25s ease;
+    }
+
+    /* ── Responsive tweaks ───────────────────────────────────────────────── */
+    @media (min-width: 480px) {
+      .hero-ctas {
+        flex-direction: row;
+        max-width: 440px;
+      }
+      .btn-primary,
+      .btn-secondary {
+        width: auto;
+        flex: 1;
+      }
+    }
+
+    @media (min-width: 640px) {
+      .hero {
+        padding: 72px 16px 64px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Theme Toggle (floating pill) ────────────────────────────────────── -->
+  <button id="theme-toggle" aria-label="Toggle colour theme">
+    <span class="toggle-icon" id="toggle-icon">🌙</span>
+    <span id="toggle-label">Dark</span>
+  </button>
+
+  <!-- ── Header ────────────────────────────────────────────────────────────── -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo" aria-label="PondMaster home">
+        <!-- Fish SVG logo: white fish silhouette on dark-blue circle -->
+        <div class="logo-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <!-- Fish body -->
+            <path d="M3.5 12C3.5 12 6 7 12 7C17 7 20.5 10.5 20.5 12C20.5 13.5 17 17 12 17C6 17 3.5 12 3.5 12Z" fill="white"/>
+            <!-- Tail fin -->
+            <path d="M3.5 12L1 9V15L3.5 12Z" fill="white"/>
+            <!-- Eye -->
+            <circle cx="16" cy="11" r="1.1" fill="#1A5276"/>
+            <!-- Fin accent -->
+            <path d="M11 7.5C11 7.5 13 5.5 15.5 6.5" stroke="white" stroke-width="1" stroke-linecap="round" opacity="0.7"/>
+          </svg>
+        </div>
+        <span class="logo-text">PondMaster</span>
+      </a>
+
+      <div class="header-actions">
+        <a href="auth.html" class="btn-signin">Sign In</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Hero ──────────────────────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-eyebrow">
+        <span>🐟</span>
+        <span>Tilapia Pond Management</span>
+      </div>
+
+      <h1 class="hero-headline">
+        Manage every <span class="highlight-blue">pond</span>.<br/>
+        Track every <span class="highlight-blue">fish</span>.<br/>
+        Harvest maximum <span class="highlight-green">profit</span>.
+      </h1>
+
+      <p class="hero-sub">
+        Built for tilapia farmers in Malawi, Zambia &amp; Zimbabwe — works offline on 2G.
+      </p>
+
+      <div class="hero-ctas">
+        <a href="auth.html?mode=register" class="btn-primary">Get Started Free</a>
+        <a href="demo.html" class="btn-secondary">Try Demo</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features ──────────────────────────────────────────────────────────── -->
+  <section class="features-section" aria-labelledby="features-heading">
+    <h2 class="section-title" id="features-heading">Everything you need to run a profitable pond</h2>
+
+    <div class="features-scroll-wrapper" role="list">
+
+      <article class="feature-card" role="listitem">
+        <div class="feature-icon" aria-hidden="true">📈</div>
+        <h3 class="feature-title">Track Growth</h3>
+        <p class="feature-desc">Auto-calculates fish weight daily using proven monosex Nile tilapia growth curve. Know exactly when your harvest is ready.</p>
+      </article>
+
+      <article class="feature-card" role="listitem">
+        <div class="feature-icon" aria-hidden="true">🤖</div>
+        <h3 class="feature-title">AI Advisor</h3>
+        <p class="feature-desc">Expert pond advice 24/7. Bring your own OpenAI, Claude, DeepSeek or Gemini key. Ask anything about water quality, feed or disease.</p>
+      </article>
+
+      <article class="feature-card" role="listitem">
+        <div class="feature-icon" aria-hidden="true">👷</div>
+        <h3 class="feature-title">Worker Schedules</h3>
+        <p class="feature-desc">Auto-generates daily feed schedule. Share link with workers — no app needed. Works on any basic smartphone browser.</p>
+      </article>
+
+    </div>
+
+    <p class="scroll-hint" aria-hidden="true">← swipe to see more →</p>
+  </section>
+
+  <!-- ── Stats Bar ──────────────────────────────────────────────────────────── -->
+  <div class="stats-bar" role="region" aria-label="Key facts">
+    <div class="stats-inner">
+      <span class="stat-item">3 ponds included free</span>
+      <span class="stat-item">30KB worker card</span>
+      <span class="stat-item">Works on 2G</span>
+      <span class="stat-item">Free forever</span>
+    </div>
+  </div>
+
+  <!-- ── PWA Install Banner ─────────────────────────────────────────────────── -->
+  <div id="install-banner" role="complementary" aria-label="Install app">
+    <span class="install-banner-text">Install PondMaster for offline access</span>
+    <button class="btn-install" id="install-btn" aria-label="Install PondMaster app">Install</button>
+    <button class="btn-dismiss" id="dismiss-banner" aria-label="Dismiss install prompt">×</button>
+  </div>
+
+  <!-- ── Footer ────────────────────────────────────────────────────────────── -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <nav aria-label="Footer navigation">
+        <ul class="footer-nav">
+          <li><a href="#about">About</a></li>
+          <li><a href="privacy.html">Privacy</a></li>
+          <li><a href="https://github.com" rel="noopener noreferrer" target="_blank">GitHub</a></li>
+          <li><a href="mailto:hello@pondmaster.app">Contact</a></li>
+        </ul>
+      </nav>
+      <p class="footer-copy">&copy; 2026 PondMaster. Built with ❤️ for African fish farmers.</p>
+    </div>
+  </footer>
+
+  <!-- ── Scripts ───────────────────────────────────────────────────────────── -->
+  <script>
+    /* ── Theme toggle ─────────────────────────────────────────────────────── */
+    (function () {
+      var STORAGE_KEY = 'pondmaster_theme';
+      var html = document.documentElement;
+      var btn = document.getElementById('theme-toggle');
+      var icon = document.getElementById('toggle-icon');
+      var label = document.getElementById('toggle-label');
+
+      function applyTheme(theme) {
+        html.setAttribute('data-theme', theme);
+        if (theme === 'dark') {
+          icon.textContent = '🌙';
+          label.textContent = 'Dark';
+        } else {
+          icon.textContent = '☀️';
+          label.textContent = 'Light';
+        }
+        try { localStorage.setItem(STORAGE_KEY, theme); } catch (e) {}
+      }
+
+      // Read stored preference; default to dark
+      var stored;
+      try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+      applyTheme(stored === 'light' ? 'light' : 'dark');
+
+      btn.addEventListener('click', function () {
+        var current = html.getAttribute('data-theme');
+        applyTheme(current === 'dark' ? 'light' : 'dark');
+      });
+
+      /* ── PWA Install Banner ──────────────────────────────────────────────── */
+      var deferredPrompt = null;
+      var banner = document.getElementById('install-banner');
+      var installBtn = document.getElementById('install-btn');
+      var dismissBtn = document.getElementById('dismiss-banner');
+
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        // Only show if user hasn't dismissed before
+        var dismissed;
+        try { dismissed = localStorage.getItem('pondmaster_install_dismissed'); } catch (err) {}
+        if (!dismissed) {
+          banner.classList.add('visible');
+        }
+      });
+
+      installBtn.addEventListener('click', function () {
+        banner.classList.remove('visible');
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function () {
+            deferredPrompt = null;
+          });
+        }
+      });
+
+      dismissBtn.addEventListener('click', function () {
+        banner.classList.remove('visible');
+        try { localStorage.setItem('pondmaster_install_dismissed', '1'); } catch (err) {}
+      });
+
+      window.addEventListener('appinstalled', function () {
+        banner.classList.remove('visible');
+        deferredPrompt = null;
+      });
+    })();
+  </script>
+
+  <script src="config.js" defer></script>
+  <script src="js/app.js" defer></script>
+
+</body>
+</html>

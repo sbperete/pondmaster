@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="PondMaster — offline fallback page" />
+  <title>Offline — PondMaster</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --nav-bg: #1A5276;
+      --nav-text: #ffffff;
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text-primary: #e6edf3;
+      --text-secondary: #8b949e;
+      --accent: #2980B9;
+      --accent-muted: #1f4e79;
+      --success: #3fb950;
+      --warning: #d29922;
+      --btn-primary-bg: #1A5276;
+      --btn-primary-hover: #1f6391;
+      --btn-secondary-bg: #21262d;
+      --btn-secondary-hover: #30363d;
+      --muted-icon: #4d5566;
+    }
+
+    [data-theme="light"] {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --border: #d0d7de;
+      --text-primary: #1f2328;
+      --text-secondary: #656d76;
+      --btn-secondary-bg: #f6f8fa;
+      --btn-secondary-hover: #e8ecf0;
+      --muted-icon: #adb5bd;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Navigation ── */
+    header {
+      background-color: var(--nav-bg);
+      color: var(--nav-text);
+      padding: 0 1.5rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      flex-shrink: 0;
+    }
+
+    .logo-fish {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .logo-text {
+      font-size: 1.125rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--nav-text);
+      text-decoration: none;
+    }
+
+    .logo-text span {
+      opacity: 0.75;
+      font-weight: 400;
+    }
+
+    /* ── Main content ── */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .card {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2.5rem 2rem;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+
+    .wifi-icon {
+      color: var(--muted-icon);
+      margin-bottom: 1.25rem;
+      display: block;
+    }
+
+    .card h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.625rem;
+    }
+
+    .card p {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── Available features list ── */
+    .available-list {
+      list-style: none;
+      text-align: left;
+      background-color: var(--accent-muted);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .available-list li {
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      padding: 0.25rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .available-list li .check {
+      color: var(--success);
+      font-weight: 700;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    /* ── Sync status ── */
+    .sync-status {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+      background-color: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.875rem 1rem;
+      margin-bottom: 1.5rem;
+      text-align: left;
+      font-size: 0.875rem;
+    }
+
+    .sync-status .label {
+      color: var(--text-secondary);
+    }
+
+    .sync-status .value {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    #pending-count {
+      color: var(--warning);
+    }
+
+    /* ── Buttons ── */
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.6875rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      text-decoration: none;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+      width: 100%;
+    }
+
+    .btn-primary {
+      background-color: var(--btn-primary-bg);
+      color: #ffffff;
+      border-color: var(--btn-primary-bg);
+    }
+
+    .btn-primary:hover, .btn-primary:focus-visible {
+      background-color: var(--btn-primary-hover);
+      border-color: var(--btn-primary-hover);
+      outline: none;
+    }
+
+    .btn-secondary {
+      background-color: var(--btn-secondary-bg);
+      color: var(--text-primary);
+      border-color: var(--border);
+    }
+
+    .btn-secondary:hover, .btn-secondary:focus-visible {
+      background-color: var(--btn-secondary-hover);
+      outline: none;
+    }
+
+    /* ── Auto-sync note ── */
+    .sync-note {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+      margin-top: 0.25rem;
+    }
+
+    .sync-note strong {
+      color: var(--accent);
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <!-- Fish SVG logo -->
+    <svg class="logo-fish" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M28 16c0 0-4-8-12-8C8 8 2 16 2 16s6 8 14 8c8 0 12-8 12-8z" fill="#5DADE2" opacity="0.9"/>
+      <ellipse cx="18" cy="16" rx="7" ry="5.5" fill="#85C1E9"/>
+      <path d="M28 10l3-3v6l-3-3z" fill="#5DADE2"/>
+      <path d="M28 22l3 3v-6l-3 3z" fill="#5DADE2"/>
+      <circle cx="21" cy="14.5" r="1.25" fill="#1A2A3A"/>
+      <circle cx="21.45" cy="14.1" r="0.4" fill="#ffffff"/>
+    </svg>
+    <a href="index.html" class="logo-text">PondMaster <span>Farm</span></a>
+  </header>
+
+  <main>
+    <div class="card">
+
+      <!-- WiFi-off icon (60px) -->
+      <svg class="wifi-icon" width="60" height="60" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+           aria-hidden="true">
+        <line x1="2" y1="2" x2="22" y2="22"/>
+        <path d="M8.5 16.5a5 5 0 0 1 7 0"/>
+        <path d="M5 12.5a9 9 0 0 1 5.2-2.7"/>
+        <path d="M13.8 9.8A9 9 0 0 1 19 12.5"/>
+        <path d="M2 8.82A15 15 0 0 1 8.14 6"/>
+        <path d="M15.86 6A15 15 0 0 1 22 8.82"/>
+        <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none"/>
+      </svg>
+
+      <h1>You're offline</h1>
+      <p>No internet connection. Your cached data is still available.</p>
+
+      <!-- Available offline features -->
+      <ul class="available-list" role="list" aria-label="Features available offline">
+        <li><span class="check" aria-hidden="true">✓</span> View pond data</li>
+        <li><span class="check" aria-hidden="true">✓</span> Check feed schedules</li>
+        <li><span class="check" aria-hidden="true">✓</span> View growth charts</li>
+        <li><span class="check" aria-hidden="true">✓</span> Review health logs</li>
+      </ul>
+
+      <!-- Sync status -->
+      <div class="sync-status" aria-live="polite">
+        <div>
+          <span class="label">Pending syncs: </span>
+          <span class="value" id="pending-count">—</span>
+        </div>
+        <div>
+          <span class="label">Last synced: </span>
+          <span class="value" id="last-sync">—</span>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="window.location.reload()" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+          Retry Connection
+        </button>
+        <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          View Cached Dashboard
+        </button>
+      </div>
+
+      <!-- Auto-sync note -->
+      <p class="sync-note">
+        When reconnected, <strong id="sync-note-count">your</strong> offline logs will sync automatically.
+      </p>
+
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2026 PondMaster &mdash; Offline Mode
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* ── Relative time formatter ── */
+      function relativeTime(ts) {
+        if (!ts) return 'Never';
+        var date = new Date(ts);
+        if (isNaN(date.getTime())) return 'Unknown';
+        var diffMs = Date.now() - date.getTime();
+        var diffSec = Math.floor(diffMs / 1000);
+        if (diffSec < 60) return 'Just now';
+        var diffMin = Math.floor(diffSec / 60);
+        if (diffMin < 60) return diffMin + ' minute' + (diffMin === 1 ? '' : 's') + ' ago';
+        var diffHr = Math.floor(diffMin / 60);
+        if (diffHr < 24) return diffHr + ' hour' + (diffHr === 1 ? '' : 's') + ' ago';
+        var diffDay = Math.floor(diffHr / 24);
+        if (diffDay < 30) return diffDay + ' day' + (diffDay === 1 ? '' : 's') + ' ago';
+        return date.toLocaleDateString();
+      }
+
+      /* ── Populate last-sync ── */
+      try {
+        var lastSync = localStorage.getItem('pm_last_sync');
+        var lastSyncEl = document.getElementById('last-sync');
+        if (lastSyncEl) {
+          lastSyncEl.textContent = relativeTime(lastSync);
+        }
+      } catch (e) { /* localStorage unavailable */ }
+
+      /* ── Populate pending-count ── */
+      try {
+        var rawCount = localStorage.getItem('pm_offline_queue_count');
+        var count = rawCount !== null ? parseInt(rawCount, 10) : 0;
+        if (isNaN(count)) count = 0;
+
+        var pendingEl = document.getElementById('pending-count');
+        if (pendingEl) {
+          pendingEl.textContent = count;
+        }
+
+        var noteEl = document.getElementById('sync-note-count');
+        if (noteEl) {
+          noteEl.textContent = count > 0
+            ? count + ' offline log' + (count === 1 ? '' : 's')
+            : 'your';
+        }
+      } catch (e) { /* localStorage unavailable */ }
+
+      /* ── Auto-redirect when connection restores ── */
+      window.addEventListener('online', function () {
+        window.location.replace('dashboard.html');
+      });
+    })();
+  </script>
+
+</body>
+</html>

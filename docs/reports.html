@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Reports — PondMaster</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1A5276">
+</head>
+<body>
+<div class="offline-bar">No internet — working offline</div>
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div style="padding:20px 16px;display:flex;align-items:center;gap:10px">
+      <svg width="32" height="32" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#1A5276"/><ellipse cx="50" cy="48" rx="28" ry="14" fill="white"/><polygon points="22,48 8,36 8,60" fill="white"/></svg>
+      <span style="font-weight:700;font-size:16px;color:var(--text-nav)">PondMaster</span>
+    </div>
+    <nav><ul class="sidebar-nav">
+      <li><a href="dashboard.html">🏠 Dashboard</a></li>
+      <li><a href="calendar.html">📅 Calendar</a></li>
+      <li><a href="reports.html" class="active">📊 Reports</a></li>
+      <li><a href="settings.html">⚙️ Settings</a></li>
+      <li><a href="#" onclick="window.PondAuth?.signOut()">↩ Sign Out</a></li>
+    </ul></nav>
+  </aside>
+
+  <div class="main-content">
+    <div class="top-bar">
+      <button onclick="document.getElementById('sidebar').classList.toggle('open')" style="background:none;border:none;font-size:20px;cursor:pointer;margin-right:12px;display:none" class="hamburger-btn">☰</button>
+      <span style="font-weight:700;font-size:17px">Reports</span>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <button onclick="exportCSV()" style="height:32px;padding:0 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-primary);font-size:13px;cursor:pointer">⬇ CSV</button>
+        <button onclick="window.print()" style="height:32px;padding:0 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-primary);font-size:13px;cursor:pointer">🖨 PDF</button>
+        <button class="theme-toggle" style="background:none;border:1px solid var(--border);border-radius:20px;padding:6px 12px;cursor:pointer;font-size:14px">🌙</button>
+      </div>
+    </div>
+
+    <div style="padding:16px">
+      <!-- Date range + pond filter -->
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+          <div style="flex:1;min-width:140px">
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px">From</label>
+            <input type="date" id="filter-from" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:14px">
+          </div>
+          <div style="flex:1;min-width:140px">
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px">To</label>
+            <input type="date" id="filter-to" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:14px">
+          </div>
+          <div style="flex:1;min-width:140px">
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px">Pond</label>
+            <select id="filter-pond" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:14px">
+              <option value="">All Ponds</option>
+            </select>
+          </div>
+          <button onclick="applyFilters()" style="height:38px;padding:0 16px;border-radius:6px;border:none;background:var(--accent-blue);color:white;font-size:14px;cursor:pointer;font-weight:600">Apply</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+          <button onclick="setRange(7)" class="range-btn" style="font-size:12px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer">7d</button>
+          <button onclick="setRange(30)" class="range-btn active" style="font-size:12px;padding:4px 10px;border-radius:20px;border:1px solid var(--accent-blue);background:rgba(88,166,255,0.1);color:var(--accent-blue);cursor:pointer">30d</button>
+          <button onclick="setRange(90)" class="range-btn" style="font-size:12px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer">90d</button>
+          <button onclick="setRange(180)" class="range-btn" style="font-size:12px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer">6 months</button>
+          <button onclick="setRange(0)" class="range-btn" style="font-size:12px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer">All time</button>
+        </div>
+      </div>
+
+      <!-- Summary KPI row -->
+      <div id="kpi-row" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px"></div>
+
+      <!-- Growth chart -->
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h3 style="font-size:14px;font-weight:700;margin:0">Growth (actual vs projected)</h3>
+          <span id="growth-legend" style="font-size:12px;color:var(--text-muted)"></span>
+        </div>
+        <canvas id="chart-growth" height="200"></canvas>
+      </div>
+
+      <!-- Feed cost + mortality row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="card">
+          <h3 style="font-size:14px;font-weight:700;margin:0 0 12px">Feed Cost (MWK/week)</h3>
+          <canvas id="chart-feed" height="180"></canvas>
+        </div>
+        <div class="card">
+          <h3 style="font-size:14px;font-weight:700;margin:0 0 12px">Mortality (%/week)</h3>
+          <canvas id="chart-mortality" height="180"></canvas>
+        </div>
+      </div>
+
+      <!-- FCR trend -->
+      <div class="card" style="margin-bottom:16px">
+        <h3 style="font-size:14px;font-weight:700;margin:0 0 12px">Feed Conversion Ratio (FCR)</h3>
+        <canvas id="chart-fcr" height="160"></canvas>
+      </div>
+
+      <!-- Financial summary -->
+      <div class="card" style="margin-bottom:16px">
+        <h3 style="font-size:14px;font-weight:700;margin:0 0 12px">Financial Summary</h3>
+        <canvas id="chart-financial" height="200"></canvas>
+      </div>
+
+      <!-- Log table -->
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h3 style="font-size:14px;font-weight:700;margin:0">Daily Log Records</h3>
+          <span id="log-count" style="font-size:12px;color:var(--text-muted)"></span>
+        </div>
+        <div style="overflow-x:auto">
+          <table id="log-table" style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border)">
+                <th style="text-align:left;padding:8px 6px;font-weight:600;color:var(--text-muted);white-space:nowrap">Date</th>
+                <th style="text-align:left;padding:8px 6px;font-weight:600;color:var(--text-muted)">Pond</th>
+                <th style="text-align:right;padding:8px 6px;font-weight:600;color:var(--text-muted)">Feed (kg)</th>
+                <th style="text-align:right;padding:8px 6px;font-weight:600;color:var(--text-muted)">Temp</th>
+                <th style="text-align:right;padding:8px 6px;font-weight:600;color:var(--text-muted)">DO</th>
+                <th style="text-align:right;padding:8px 6px;font-weight:600;color:var(--text-muted)">pH</th>
+                <th style="text-align:right;padding:8px 6px;font-weight:600;color:var(--text-muted)">Avg wt</th>
+                <th style="text-align:right;padding:8px 6px;font-weight:600;color:var(--text-muted)">Deaths</th>
+              </tr>
+            </thead>
+            <tbody id="log-tbody"></tbody>
+          </table>
+        </div>
+        <div id="log-empty" style="text-align:center;padding:32px;color:var(--text-muted);display:none">No log records in this date range</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom nav -->
+<nav class="bottom-nav">
+  <a href="dashboard.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;text-decoration:none;color:var(--text-muted);font-size:11px"><span style="font-size:20px">🏠</span>Home</a>
+  <a href="dashboard.html#ponds" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;text-decoration:none;color:var(--text-muted);font-size:11px"><span style="font-size:20px">🐟</span>Ponds</a>
+  <a href="calendar.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;text-decoration:none;color:var(--text-muted);font-size:11px"><span style="font-size:20px">📅</span>Calendar</a>
+  <a href="pond.html?tab=chat" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;text-decoration:none;color:var(--text-muted);font-size:11px"><span style="font-size:20px">🤖</span>Chat</a>
+  <a href="settings.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;text-decoration:none;color:var(--text-muted);font-size:11px"><span style="font-size:20px">⚙️</span>Settings</a>
+</nav>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="config.js" defer></script>
+<script src="js/theme.js" defer></script>
+<script src="js/supabase.js" defer></script>
+<script src="js/app.js" defer></script>
+<script src="js/growth.js" defer></script>
+<script src="js/charts.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4" defer></script>
+
+<script>
+let allPonds = [], allLogs = [], filteredLogs = [], pondMap = {};
+let currentFrom = '', currentTo = '', currentPondId = '';
+
+function setRange(days) {
+  document.querySelectorAll('.range-btn').forEach(b => {
+    b.style.border = '1px solid var(--border)';
+    b.style.background = 'transparent';
+    b.style.color = 'var(--text-secondary)';
+  });
+  event.target.style.border = '1px solid var(--accent-blue)';
+  event.target.style.background = 'rgba(88,166,255,0.1)';
+  event.target.style.color = 'var(--accent-blue)';
+
+  const to = new Date();
+  const from = days > 0 ? new Date(Date.now() - days * 86400000) : new Date('2020-01-01');
+  document.getElementById('filter-to').value = to.toISOString().split('T')[0];
+  document.getElementById('filter-from').value = from.toISOString().split('T')[0];
+  applyFilters();
+}
+
+function applyFilters() {
+  currentFrom = document.getElementById('filter-from').value;
+  currentTo = document.getElementById('filter-to').value;
+  currentPondId = document.getElementById('filter-pond').value;
+
+  filteredLogs = allLogs.filter(l => {
+    if (currentFrom && l.log_date < currentFrom) return false;
+    if (currentTo && l.log_date > currentTo) return false;
+    if (currentPondId && l.pond_id !== currentPondId) return false;
+    return true;
+  });
+
+  renderKPIs();
+  renderLogTable();
+  renderCharts();
+}
+
+function renderKPIs() {
+  const totalFeedKg = filteredLogs.reduce((s,l) => s + (l.feed_amount_kg||0), 0);
+  const totalFeedCost = filteredLogs.reduce((s,l) => s + (l.feed_cost_mwk||0), 0);
+  const totalMortality = filteredLogs.reduce((s,l) => s + (l.mortality_count||0), 0);
+  const weighLogs = filteredLogs.filter(l => l.avg_weight_g);
+  const latestWeight = weighLogs.length ? weighLogs.sort((a,b) => b.log_date.localeCompare(a.log_date))[0].avg_weight_g : null;
+  const fmt = window.PondGrowth?.formatMWK || (v => 'MWK ' + Math.round(v).toLocaleString());
+
+  document.getElementById('kpi-row').innerHTML = `
+    <div class="metric-card card"><div style="font-size:20px;font-weight:700;color:var(--accent-green)">${fmt(totalFeedCost)}</div><div style="font-size:12px;color:var(--text-muted)">Total Feed Cost</div></div>
+    <div class="metric-card card"><div style="font-size:20px;font-weight:700;color:var(--accent-blue)">${totalFeedKg.toFixed(1)} kg</div><div style="font-size:12px;color:var(--text-muted)">Total Feed Used</div></div>
+    <div class="metric-card card"><div style="font-size:20px;font-weight:700;color:var(--alert-red)">${totalMortality.toLocaleString()}</div><div style="font-size:12px;color:var(--text-muted)">Total Mortalities</div></div>
+    <div class="metric-card card"><div style="font-size:20px;font-weight:700;color:var(--accent-orange)">${latestWeight ? latestWeight + 'g' : '—'}</div><div style="font-size:12px;color:var(--text-muted)">Latest Avg Weight</div></div>
+  `;
+}
+
+function renderLogTable() {
+  const tbody = document.getElementById('log-tbody');
+  const empty = document.getElementById('log-empty');
+  const sorted = [...filteredLogs].sort((a,b) => b.log_date.localeCompare(a.log_date)).slice(0,100);
+  document.getElementById('log-count').textContent = `${filteredLogs.length} records`;
+
+  if (!sorted.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = sorted.map(l => {
+    const pond = pondMap[l.pond_id];
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:8px 6px;white-space:nowrap">${l.log_date}</td>
+      <td style="padding:8px 6px">${pond?.pond_name || '—'}</td>
+      <td style="padding:8px 6px;text-align:right">${l.feed_amount_kg?.toFixed(1) || '—'}</td>
+      <td style="padding:8px 6px;text-align:right">${l.water_temp_c ? l.water_temp_c + '°C' : '—'}</td>
+      <td style="padding:8px 6px;text-align:right;color:${l.do_level < 4 ? 'var(--alert-red)' : 'inherit'}">${l.do_level || '—'}</td>
+      <td style="padding:8px 6px;text-align:right">${l.ph_level || '—'}</td>
+      <td style="padding:8px 6px;text-align:right;color:var(--accent-green)">${l.avg_weight_g ? l.avg_weight_g + 'g' : '—'}</td>
+      <td style="padding:8px 6px;text-align:right;color:${l.mortality_count > 0 ? 'var(--alert-red)' : 'inherit'}">${l.mortality_count || 0}</td>
+    </tr>`;
+  }).join('');
+}
+
+function groupByWeek(logs) {
+  const weeks = {};
+  logs.forEach(l => {
+    const d = new Date(l.log_date + 'T12:00:00');
+    const weekStart = new Date(d);
+    weekStart.setDate(d.getDate() - d.getDay());
+    const key = weekStart.toISOString().split('T')[0];
+    if (!weeks[key]) weeks[key] = [];
+    weeks[key].push(l);
+  });
+  return weeks;
+}
+
+function renderCharts() {
+  if (!window.Chart) return;
+  const theme = document.documentElement.getAttribute('data-theme') === 'dark';
+  const gridColor = theme ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+  const textColor = theme ? '#8B949E' : '#6E7681';
+  const COLORS = ['#58A6FF','#3FB950','#F0883E','#D29922','#BC8CFF','#FF7B72'];
+
+  // Destroy existing charts
+  ['chart-growth','chart-feed','chart-mortality','chart-fcr','chart-financial'].forEach(id => {
+    const canvas = document.getElementById(id);
+    if (canvas._chartInstance) { canvas._chartInstance.destroy(); canvas._chartInstance = null; }
+  });
+
+  const defaultOptions = {
+    responsive: true,
+    plugins: { legend: { labels: { color: textColor, font: { size: 12 } } } },
+    scales: {
+      x: { ticks: { color: textColor, maxTicksLimit: 8 }, grid: { color: gridColor } },
+      y: { ticks: { color: textColor }, grid: { color: gridColor } }
+    }
+  };
+
+  // === Growth Chart ===
+  const pondsInFilter = currentPondId ? [allPonds.find(p => p.id === currentPondId)].filter(Boolean) : allPonds;
+  const growthDatasets = [];
+  pondsInFilter.forEach((pond, i) => {
+    const pondLogs = filteredLogs.filter(l => l.pond_id === pond.id && l.avg_weight_g);
+    if (!pondLogs.length) return;
+    const sorted = pondLogs.sort((a,b) => a.log_date.localeCompare(b.log_date));
+    growthDatasets.push({
+      label: pond.pond_name + ' (actual)',
+      data: sorted.map(l => ({ x: l.log_date, y: l.avg_weight_g })),
+      borderColor: COLORS[i % COLORS.length],
+      backgroundColor: 'transparent',
+      tension: 0.3, pointRadius: 4
+    });
+  });
+  // Projected line from growth curve
+  if (window.PondGrowth && pondsInFilter.length === 1) {
+    const pond = pondsInFilter[0];
+    const lots = allLogs.filter(l => l.pond_id === pond.id);
+    const minDate = lots.length ? lots.map(l=>l.log_date).sort()[0] : null;
+    if (minDate) {
+      const projData = [];
+      for (let w = 0; w <= 28; w++) {
+        const d = new Date(new Date(minDate).getTime() + w * 7 * 86400000);
+        projData.push({ x: d.toISOString().split('T')[0], y: window.PondGrowth.interpolateGrowthCurve(w) });
+      }
+      growthDatasets.push({
+        label: 'Projected',
+        data: projData,
+        borderColor: 'rgba(255,255,255,0.3)',
+        borderDash: [5,5],
+        backgroundColor: 'transparent',
+        tension: 0.3, pointRadius: 0
+      });
+    }
+  }
+  if (growthDatasets.length) {
+    const gc = document.getElementById('chart-growth');
+    gc._chartInstance = new Chart(gc, {
+      type: 'line',
+      data: { datasets: growthDatasets },
+      options: { ...defaultOptions, parsing: false, scales: {
+        x: { type: 'time', time: { unit: 'week' }, ticks: { color: textColor }, grid: { color: gridColor } },
+        y: { ticks: { color: textColor, callback: v => v + 'g' }, grid: { color: gridColor } }
+      }}
+    });
+    document.getElementById('growth-legend').textContent = growthDatasets.map(d=>d.label).join(' · ');
+  }
+
+  // === Feed Cost Weekly ===
+  const feedWeeks = groupByWeek(filteredLogs.filter(l => l.feed_cost_mwk));
+  const feedLabels = Object.keys(feedWeeks).sort().slice(-16);
+  const feedDatasets = [];
+  pondsInFilter.forEach((pond, i) => {
+    const data = feedLabels.map(wk => {
+      const logs = (feedWeeks[wk] || []).filter(l => l.pond_id === pond.id);
+      return logs.reduce((s,l) => s + (l.feed_cost_mwk||0), 0);
+    });
+    if (data.some(v=>v>0)) feedDatasets.push({ label: pond.pond_name, data, backgroundColor: COLORS[i%COLORS.length]+'99', borderColor: COLORS[i%COLORS.length], borderWidth:1 });
+  });
+  if (feedDatasets.length) {
+    const fc = document.getElementById('chart-feed');
+    fc._chartInstance = new Chart(fc, {
+      type: 'bar',
+      data: { labels: feedLabels.map(l => l.slice(5)), datasets: feedDatasets },
+      options: { ...defaultOptions, plugins: { legend: { display: feedDatasets.length > 1, labels: { color: textColor, font:{size:11} } } }, scales: {
+        x: { stacked: true, ticks: { color: textColor, maxTicksLimit: 8 }, grid: { color: gridColor } },
+        y: { stacked: true, ticks: { color: textColor, callback: v => 'K'+Math.round(v/1000) }, grid: { color: gridColor } }
+      }}
+    });
+  }
+
+  // === Mortality % Weekly ===
+  const mortWeeks = groupByWeek(filteredLogs);
+  const mortLabels = Object.keys(mortWeeks).sort().slice(-16);
+  const mortDatasets = pondsInFilter.map((pond, i) => ({
+    label: pond.pond_name,
+    data: mortLabels.map(wk => {
+      const logs = (mortWeeks[wk] || []).filter(l => l.pond_id === pond.id);
+      const total = logs.reduce((s,l) => s + (l.mortality_count||0), 0);
+      return +(total / 10800 * 100).toFixed(3);
+    }),
+    borderColor: COLORS[i%COLORS.length],
+    backgroundColor: 'transparent',
+    tension: 0.3, pointRadius: 3
+  })).filter(d => d.data.some(v=>v>0));
+  if (mortDatasets.length) {
+    const mc = document.getElementById('chart-mortality');
+    mc._chartInstance = new Chart(mc, {
+      type: 'line',
+      data: { labels: mortLabels.map(l=>l.slice(5)), datasets: mortDatasets },
+      options: { ...defaultOptions, plugins: { legend: { display: mortDatasets.length>1, labels:{color:textColor,font:{size:11}} } }, scales: {
+        x: { ticks:{color:textColor,maxTicksLimit:8}, grid:{color:gridColor} },
+        y: { ticks:{color:textColor,callback:v=>v+'%'}, grid:{color:gridColor}, min: 0 }
+      }}
+    });
+  }
+
+  // === FCR Trend ===
+  if (window.PondGrowth) {
+    const fcrDatasets = pondsInFilter.map((pond, i) => {
+      const pondLogs = filteredLogs.filter(l => l.pond_id === pond.id);
+      const weeks = groupByWeek(pondLogs);
+      const labels = Object.keys(weeks).sort().slice(-16);
+      const data = labels.map(wk => {
+        const logs = weeks[wk] || [];
+        const feed = logs.reduce((s,l) => s+(l.feed_amount_kg||0), 0);
+        const weighLog = logs.find(l => l.avg_weight_g);
+        if (!feed || !weighLog) return null;
+        const biomass = (weighLog.avg_weight_g * 10800) / 1000;
+        return +(feed / (biomass * 0.03)).toFixed(2);
+      }).filter(Boolean);
+      return { label: pond.pond_name, data, borderColor: COLORS[i%COLORS.length], backgroundColor:'transparent', tension:0.3, pointRadius:3 };
+    }).filter(d=>d.data.length>0);
+
+    const fcrLabels = (() => {
+      const pondLogs = filteredLogs.filter(l => !currentPondId || l.pond_id === currentPondId);
+      return Object.keys(groupByWeek(pondLogs)).sort().slice(-16).map(l=>l.slice(5));
+    })();
+
+    if (fcrDatasets.length) {
+      const fcrC = document.getElementById('chart-fcr');
+      fcrC._chartInstance = new Chart(fcrC, {
+        type: 'line',
+        data: { labels: fcrLabels, datasets: fcrDatasets },
+        options: { ...defaultOptions, plugins: { legend:{display:fcrDatasets.length>1,labels:{color:textColor,font:{size:11}}}, annotation: {} }, scales: {
+          x:{ticks:{color:textColor,maxTicksLimit:8},grid:{color:gridColor}},
+          y:{ticks:{color:textColor},grid:{color:gridColor},min:0,max:3,title:{display:true,text:'FCR (lower=better)',color:textColor,font:{size:11}}}
+        }}
+      });
+    }
+  }
+
+  // === Financial Summary bar ===
+  if (window.PondGrowth && pondsInFilter.length) {
+    const finData = pondsInFilter.map(pond => {
+      const pLogs = filteredLogs.filter(l => l.pond_id === pond.id);
+      const feedCost = pLogs.reduce((s,l) => s+(l.feed_cost_mwk||0), 0);
+      const weighLog = [...pLogs].filter(l=>l.avg_weight_g).sort((a,b)=>b.log_date.localeCompare(a.log_date))[0];
+      const latestWt = weighLog?.avg_weight_g || 0;
+      const estimatedRevenue = latestWt > 0 ? (latestWt * 10800 / 1000) * 15000 : 0;
+      const profit = estimatedRevenue - feedCost;
+      return { pond, feedCost, estimatedRevenue, profit };
+    });
+
+    const finC = document.getElementById('chart-financial');
+    finC._chartInstance = new Chart(finC, {
+      type: 'bar',
+      data: {
+        labels: finData.map(d=>d.pond.pond_name),
+        datasets: [
+          { label: 'Feed Cost', data: finData.map(d=>Math.round(d.feedCost/1000)), backgroundColor: '#FF7B7299' },
+          { label: 'Est. Revenue', data: finData.map(d=>Math.round(d.estimatedRevenue/1000)), backgroundColor: '#3FB95099' },
+          { label: 'Est. Profit', data: finData.map(d=>Math.round(d.profit/1000)), backgroundColor: '#58A6FF99' }
+        ]
+      },
+      options: { ...defaultOptions, scales: {
+        x:{ticks:{color:textColor},grid:{color:gridColor}},
+        y:{ticks:{color:textColor,callback:v=>'K'+v},grid:{color:gridColor},title:{display:true,text:'MWK (thousands)',color:textColor,font:{size:11}}}
+      }}
+    });
+  }
+}
+
+function exportCSV() {
+  if (!filteredLogs.length) { window.PondApp?.showToast('No data to export','warning'); return; }
+  const headers = ['Date','Pond','Feed Type','Feed (kg)','Feed Cost (MWK)','Temp (°C)','DO','pH','Avg Weight (g)','Mortalities','Notes'];
+  const rows = filteredLogs.sort((a,b)=>b.log_date.localeCompare(a.log_date)).map(l => [
+    l.log_date,
+    pondMap[l.pond_id]?.pond_name || l.pond_id,
+    l.feed_type || '',
+    l.feed_amount_kg || '',
+    l.feed_cost_mwk || '',
+    l.water_temp_c || '',
+    l.do_level || '',
+    l.ph_level || '',
+    l.avg_weight_g || '',
+    l.mortality_count || 0,
+    (l.notes || '').replace(/,/g,';')
+  ]);
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `pondmaster-logs-${currentFrom || 'all'}-to-${currentTo || 'all'}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  window.PondApp?.showToast('CSV exported','success');
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+  // Set default date range (30d)
+  const to = new Date();
+  const from = new Date(Date.now() - 30 * 86400000);
+  document.getElementById('filter-to').value = to.toISOString().split('T')[0];
+  document.getElementById('filter-from').value = from.toISOString().split('T')[0];
+
+  const { data: { user } } = await (window.supabaseClient?.auth.getUser() || Promise.resolve({ data: {} }));
+  if (!user) { window.location.href = 'auth.html'; return; }
+
+  try {
+    allPonds = await window.PondDB.getPonds(user.id);
+    allPonds.forEach(p => pondMap[p.id] = p);
+
+    // Populate pond filter
+    const sel = document.getElementById('filter-pond');
+    allPonds.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id; opt.textContent = p.pond_name;
+      sel.appendChild(opt);
+    });
+
+    // Load all logs
+    const logsArrays = await Promise.all(allPonds.map(p => window.PondDB.getLogs(p.id)));
+    allLogs = logsArrays.flat();
+
+    applyFilters();
+  } catch(e) {
+    window.PondApp?.showToast('Could not load data','error');
+  }
+});
+
+// Re-render charts on theme change
+document.addEventListener('themechange', renderCharts);
+</script>
+
+<style>
+@media print {
+  .sidebar, .bottom-nav, .top-bar button, #filter-from, #filter-to, #filter-pond, .range-btn, button { display: none !important; }
+  .card { break-inside: avoid; }
+  body { background: white !important; color: black !important; }
+}
+</style>
+</body>
+</html>

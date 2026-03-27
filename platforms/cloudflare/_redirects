@@ -1,0 +1,4 @@
+/app      /dashboard.html  302
+/login    /auth.html       302
+/demo     /demo.html       302
+/*        /index.html      200

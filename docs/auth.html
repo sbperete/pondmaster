@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Sign in or create your PondMaster account to manage your tilapia ponds." />
+  <title>PondMaster — Sign In</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0D1117" />
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    /* ─── CSS Custom Properties ─────────────────────────────────────── */
+    :root,
+    [data-theme="light"] {
+      --bg:        #F8F9FA;
+      --card:      #FFFFFF;
+      --text:      #1A1A2E;
+      --subtext:   #5A6472;
+      --border:    #E0E0E0;
+      --input-bg:  #FFFFFF;
+      --accent:    #2DA44E;
+      --accent-hv: #238636;
+      --danger:    #CF222E;
+      --danger-bg: #FFEBE9;
+      --success:   #1A7F37;
+      --success-bg:#DAFBE1;
+      --tab-active:#2DA44E;
+      --shadow:    0 4px 24px rgba(0,0,0,0.08);
+      --radius:    12px;
+      --toggle-bg: #E0E0E0;
+    }
+
+    [data-theme="dark"] {
+      --bg:        #0D1117;
+      --card:      #1C2128;
+      --text:      #E6EDF3;
+      --subtext:   #8B949E;
+      --border:    #30363D;
+      --input-bg:  #21262D;
+      --accent:    #2DA44E;
+      --accent-hv: #3FB55E;
+      --danger:    #F85149;
+      --danger-bg: #2D1419;
+      --success:   #3FB55E;
+      --success-bg:#122117;
+      --tab-active:#2DA44E;
+      --shadow:    0 4px 32px rgba(0,0,0,0.45);
+      --radius:    12px;
+      --toggle-bg: #30363D;
+    }
+
+    /* ─── Reset & Base ──────────────────────────────────────────────── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-size: 16px;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: background 0.25s, color 0.25s;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    a:hover { text-decoration: underline; }
+
+    /* ─── Header ────────────────────────────────────────────────────── */
+    .site-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+    }
+
+    .logo-text {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .logo-text span {
+      color: var(--accent);
+    }
+
+    /* Theme toggle button */
+    .theme-toggle {
+      background: var(--toggle-bg);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      cursor: pointer;
+      width: 44px;
+      height: 26px;
+      position: relative;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+
+    .theme-toggle::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--text);
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    [data-theme="light"] .theme-toggle::after {
+      transform: translateX(18px);
+    }
+
+    .theme-toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .theme-label {
+      font-size: 0.8rem;
+      color: var(--subtext);
+      user-select: none;
+    }
+
+    /* ─── Main / Card ───────────────────────────────────────────────── */
+    main {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 16px 32px;
+    }
+
+    .auth-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 420px;
+      overflow: hidden;
+      transition: background 0.25s, border-color 0.25s;
+    }
+
+    /* ─── Tab Bar ───────────────────────────────────────────────────── */
+    .tab-bar {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 16px 0;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--subtext);
+      position: relative;
+      transition: color 0.2s;
+    }
+
+    .tab-btn::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--tab-active);
+      transform: scaleX(0);
+      transition: transform 0.2s;
+    }
+
+    .tab-btn.active {
+      color: var(--text);
+    }
+
+    .tab-btn.active::after {
+      transform: scaleX(1);
+    }
+
+    /* ─── Card Body ─────────────────────────────────────────────────── */
+    .card-body {
+      padding: 28px 28px 24px;
+    }
+
+    /* ─── Forms ─────────────────────────────────────────────────────── */
+    .auth-form {
+      display: none;
+    }
+
+    .auth-form.active {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      min-height: 48px;
+      padding: 0 44px 0 14px;
+      font-size: 1rem;
+      font-family: inherit;
+      background: var(--input-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(45, 164, 78, 0.18);
+    }
+
+    input::placeholder {
+      color: var(--subtext);
+      opacity: 0.7;
+    }
+
+    /* Eye toggle */
+    .eye-btn {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--subtext);
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+    }
+
+    .eye-btn:hover { color: var(--text); }
+
+    /* ─── Password Strength ─────────────────────────────────────────── */
+    .strength-bars {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .strength-bar {
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border);
+      transition: background 0.25s;
+    }
+
+    .strength-bar.s1 { background: #CF222E; }
+    .strength-bar.s2 { background: #E36209; }
+    .strength-bar.s3 { background: #F4A522; }
+    .strength-bar.s4 { background: #2DA44E; }
+
+    .strength-label {
+      font-size: 0.75rem;
+      color: var(--subtext);
+      margin-top: 5px;
+      min-height: 1em;
+    }
+
+    /* ─── Remember me / Forgot row ──────────────────────────────────── */
+    .row-between {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      font-weight: normal;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .forgot-link {
+      font-size: 0.875rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ─── Submit Button ─────────────────────────────────────────────── */
+    .btn-primary {
+      width: 100%;
+      min-height: 48px;
+      padding: 0 20px;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: inherit;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      letter-spacing: 0.2px;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hv);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    .btn-primary.loading .btn-spinner { display: block; }
+    .btn-primary.loading .btn-label   { display: none; }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ─── Divider ───────────────────────────────────────────────────── */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 22px 0;
+      color: var(--subtext);
+      font-size: 0.8rem;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ─── Alerts ────────────────────────────────────────────────────── */
+    .alert {
+      display: none;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      line-height: 1.4;
+      margin-top: 18px;
+    }
+
+    .alert.visible {
+      display: block;
+    }
+
+    #auth-error {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: 1px solid var(--danger);
+    }
+
+    #auth-success {
+      background: var(--success-bg);
+      color: var(--success);
+      border: 1px solid var(--success);
+    }
+
+    /* ─── Demo Link ─────────────────────────────────────────────────── */
+    .demo-link-wrap {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .demo-link {
+      font-size: 0.9rem;
+      color: var(--subtext);
+      transition: color 0.2s;
+    }
+
+    .demo-link:hover {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .demo-link .arrow {
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+
+    .demo-link:hover .arrow {
+      transform: translateX(3px);
+    }
+
+    /* ─── Footer ────────────────────────────────────────────────────── */
+    footer {
+      width: 100%;
+      text-align: center;
+      padding: 20px 16px;
+      font-size: 0.8rem;
+      color: var(--subtext);
+      border-top: 1px solid var(--border);
+      margin-top: auto;
+    }
+
+    footer a {
+      color: var(--subtext);
+      transition: color 0.2s;
+    }
+
+    footer a:hover {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer .sep {
+      margin: 0 8px;
+      opacity: 0.5;
+    }
+
+    /* ─── Responsive tweaks ─────────────────────────────────────────── */
+    @media (max-width: 460px) {
+      .card-body {
+        padding: 22px 18px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════════ -->
+  <header class="site-header">
+    <a href="index.html" class="logo" aria-label="PondMaster home">
+      <!-- Fish SVG logo -->
+      <svg class="logo-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="18" cy="18" r="18" fill="#2DA44E" opacity="0.15"/>
+        <!-- body -->
+        <ellipse cx="17" cy="18" rx="10" ry="6.5" fill="#2DA44E"/>
+        <!-- tail fin -->
+        <path d="M27 18 L33 13 L33 23 Z" fill="#2DA44E" opacity="0.85"/>
+        <!-- top fin -->
+        <path d="M13 11.5 Q17 8 21 11.5" stroke="#1a7f37" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <!-- eye -->
+        <circle cx="11" cy="17" r="1.8" fill="#fff"/>
+        <circle cx="11.5" cy="17" r="0.9" fill="#0D1117"/>
+        <!-- belly highlight -->
+        <ellipse cx="17" cy="20" rx="6" ry="2.5" fill="#fff" opacity="0.12"/>
+      </svg>
+      <span class="logo-text">Pond<span>Master</span></span>
+    </a>
+
+    <div class="theme-toggle-wrap">
+      <span class="theme-label" id="theme-label">Dark</span>
+      <button
+        class="theme-toggle"
+        id="theme-toggle"
+        aria-label="Toggle light/dark theme"
+        title="Toggle theme"
+      ></button>
+    </div>
+  </header>
+
+  <!-- ═══ MAIN ══════════════════════════════════════════════════════════ -->
+  <main>
+    <div class="auth-card" role="region" aria-label="Authentication">
+
+      <!-- Tab Bar -->
+      <div class="tab-bar" role="tablist">
+        <button
+          class="tab-btn active"
+          id="tab-login"
+          role="tab"
+          aria-selected="true"
+          aria-controls="form-login"
+          onclick="switchTab('login')"
+        >Login</button>
+        <button
+          class="tab-btn"
+          id="tab-register"
+          role="tab"
+          aria-selected="false"
+          aria-controls="form-register"
+          onclick="switchTab('register')"
+        >Register</button>
+      </div>
+
+      <div class="card-body">
+
+        <!-- ── LOGIN FORM ───────────────────────────────────────────── -->
+        <form
+          id="form-login"
+          class="auth-form active"
+          role="tabpanel"
+          aria-labelledby="tab-login"
+          novalidate
+          onsubmit="handleSignIn(event)"
+        >
+          <div class="form-group">
+            <label for="login-email">Email address</label>
+            <div class="input-wrap">
+              <input
+                type="email"
+                id="login-email"
+                name="email"
+                placeholder="you@example.com"
+                autocomplete="email"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <div class="input-wrap">
+              <input
+                type="password"
+                id="login-password"
+                name="password"
+                placeholder="Your password"
+                autocomplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                class="eye-btn"
+                aria-label="Show password"
+                onclick="toggleEye('login-password', this)"
+              >
+                <svg id="eye-show-login" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg id="eye-hide-login" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="row-between">
+            <label class="checkbox-label">
+              <input type="checkbox" id="remember-me" name="remember" checked />
+              Remember me
+            </label>
+            <a href="forgot-password.html" class="forgot-link">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="btn-primary" id="signin-btn">
+            <span class="btn-spinner"></span>
+            <span class="btn-label">Sign In</span>
+          </button>
+        </form>
+
+        <!-- ── REGISTER FORM ────────────────────────────────────────── -->
+        <form
+          id="form-register"
+          class="auth-form"
+          role="tabpanel"
+          aria-labelledby="tab-register"
+          novalidate
+          onsubmit="handleSignUp(event)"
+        >
+          <div class="form-group">
+            <label for="reg-name">Full name</label>
+            <div class="input-wrap">
+              <input
+                type="text"
+                id="reg-name"
+                name="name"
+                placeholder="Juan dela Cruz"
+                autocomplete="name"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-farm">Farm name</label>
+            <div class="input-wrap">
+              <input
+                type="text"
+                id="reg-farm"
+                name="farm_name"
+                placeholder="Sunrise Tilapia Farm"
+                autocomplete="organization"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-email">Email address</label>
+            <div class="input-wrap">
+              <input
+                type="email"
+                id="reg-email"
+                name="email"
+                placeholder="you@example.com"
+                autocomplete="email"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-password">Password</label>
+            <div class="input-wrap">
+              <input
+                type="password"
+                id="reg-password"
+                name="password"
+                placeholder="Create a strong password"
+                autocomplete="new-password"
+                required
+                oninput="updateStrength(this.value)"
+              />
+              <button
+                type="button"
+                class="eye-btn"
+                aria-label="Show password"
+                onclick="toggleEye('reg-password', this)"
+              >
+                <svg id="eye-show-reg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg id="eye-hide-reg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+            <!-- Password strength indicator -->
+            <div class="strength-bars" id="strength-bars" aria-label="Password strength">
+              <div class="strength-bar" id="sbar-1"></div>
+              <div class="strength-bar" id="sbar-2"></div>
+              <div class="strength-bar" id="sbar-3"></div>
+              <div class="strength-bar" id="sbar-4"></div>
+            </div>
+            <div class="strength-label" id="strength-label" aria-live="polite"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-confirm">Confirm password</label>
+            <div class="input-wrap">
+              <input
+                type="password"
+                id="reg-confirm"
+                name="confirm_password"
+                placeholder="Repeat your password"
+                autocomplete="new-password"
+                required
+              />
+              <button
+                type="button"
+                class="eye-btn"
+                aria-label="Show confirm password"
+                onclick="toggleEye('reg-confirm', this)"
+              >
+                <svg id="eye-show-confirm" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg id="eye-hide-confirm" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" id="signup-btn">
+            <span class="btn-spinner"></span>
+            <span class="btn-label">Create Account</span>
+          </button>
+        </form>
+
+        <!-- ── Divider ───────────────────────────────────────────────── -->
+        <div class="divider" role="separator">or</div>
+
+        <!-- ── Alerts ────────────────────────────────────────────────── -->
+        <div id="auth-error" class="alert" role="alert" aria-live="assertive"></div>
+        <div id="auth-success" class="alert" role="status" aria-live="polite"></div>
+
+      </div><!-- /.card-body -->
+    </div><!-- /.auth-card -->
+
+    <!-- Demo link -->
+    <div class="demo-link-wrap">
+      <a href="demo.html" class="demo-link">
+        Try demo without an account <span class="arrow">→</span>
+      </a>
+    </div>
+  </main>
+
+  <!-- ═══ FOOTER ════════════════════════════════════════════════════════ -->
+  <footer>
+    <a href="privacy.html">Privacy</a>
+    <span class="sep">·</span>
+    <a href="about.html">About</a>
+  </footer>
+
+  <!-- ─── App scripts ────────────────────────────────────────────────── -->
+  <script src="config.js" defer></script>
+  <script src="js/supabase.js" defer></script>
+  <script src="js/app.js" defer></script>
+
+  <script>
+    /* ═══════════════════════════════════════════════════════════════════
+       Auth page — inline JS
+       All Supabase calls are delegated to window.PondAuth (app.js).
+       This script handles:
+         • Theme toggle
+         • Tab switching (URL param aware)
+         • Eye icon toggle
+         • Password strength meter
+         • Form submit wrappers
+    ═══════════════════════════════════════════════════════════════════ */
+
+    // ── Theme ──────────────────────────────────────────────────────────
+    (function initTheme() {
+      var saved = localStorage.getItem('pm-theme');
+      // Default dark; switch to light if saved or system preference
+      if (saved === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+      } else if (!saved && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+      updateThemeLabel();
+    })();
+
+    function updateThemeLabel() {
+      var current = document.documentElement.getAttribute('data-theme');
+      document.getElementById('theme-label').textContent =
+        current === 'light' ? 'Light' : 'Dark';
+    }
+
+    document.getElementById('theme-toggle').addEventListener('click', function () {
+      var html = document.documentElement;
+      var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('pm-theme', next);
+      updateThemeLabel();
+    });
+
+    // ── Tab switching ──────────────────────────────────────────────────
+    function switchTab(tab) {
+      var isLogin = tab === 'login';
+
+      document.getElementById('tab-login').classList.toggle('active', isLogin);
+      document.getElementById('tab-register').classList.toggle('active', !isLogin);
+      document.getElementById('tab-login').setAttribute('aria-selected', isLogin ? 'true' : 'false');
+      document.getElementById('tab-register').setAttribute('aria-selected', !isLogin ? 'true' : 'false');
+
+      document.getElementById('form-login').classList.toggle('active', isLogin);
+      document.getElementById('form-register').classList.toggle('active', !isLogin);
+
+      clearAlerts();
+
+      // Update URL without reload
+      var url = new URL(window.location.href);
+      url.searchParams.set('mode', tab);
+      history.replaceState(null, '', url.toString());
+    }
+
+    // ── Respect ?mode= URL param ───────────────────────────────────────
+    (function checkUrlMode() {
+      var params = new URLSearchParams(window.location.search);
+      var mode = params.get('mode');
+      if (mode === 'register') {
+        switchTab('register');
+      } else {
+        switchTab('login');
+      }
+    })();
+
+    // ── Show/hide password (eye icon) ──────────────────────────────────
+    function toggleEye(inputId, btn) {
+      var input = document.getElementById(inputId);
+      var isPassword = input.type === 'password';
+      input.type = isPassword ? 'text' : 'password';
+
+      // Derive SVG ids from inputId
+      var suffix = inputId === 'login-password' ? 'login'
+                 : inputId === 'reg-password'   ? 'reg'
+                 : 'confirm';
+
+      document.getElementById('eye-show-' + suffix).style.display = isPassword ? 'none'  : '';
+      document.getElementById('eye-hide-' + suffix).style.display = isPassword ? ''      : 'none';
+      btn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+    }
+
+    // ── Password strength meter ────────────────────────────────────────
+    var strengthTexts = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+    var strengthColors = ['', 's1', 's2', 's3', 's4'];
+
+    function calcStrength(pw) {
+      if (!pw) return 0;
+      var score = 0;
+      if (pw.length >= 8)               score++;
+      if (/[A-Z]/.test(pw))             score++;
+      if (/[0-9]/.test(pw))             score++;
+      if (/[^A-Za-z0-9]/.test(pw))      score++;
+      return score;
+    }
+
+    function updateStrength(pw) {
+      var score = calcStrength(pw);
+      for (var i = 1; i <= 4; i++) {
+        var bar = document.getElementById('sbar-' + i);
+        // Remove all strength classes
+        bar.className = 'strength-bar';
+        if (i <= score) {
+          bar.classList.add(strengthColors[score]);
+        }
+      }
+      var label = document.getElementById('strength-label');
+      label.textContent = pw.length ? strengthTexts[score] : '';
+      label.style.color = score <= 1 ? 'var(--danger)'
+                        : score === 2 ? '#E36209'
+                        : score === 3 ? '#F4A522'
+                        : 'var(--accent)';
+    }
+
+    // ── Alert helpers ──────────────────────────────────────────────────
+    function showError(msg) {
+      var el = document.getElementById('auth-error');
+      el.textContent = msg;
+      el.classList.add('visible');
+      document.getElementById('auth-success').classList.remove('visible');
+    }
+
+    function showSuccess(msg) {
+      var el = document.getElementById('auth-success');
+      el.textContent = msg;
+      el.classList.add('visible');
+      document.getElementById('auth-error').classList.remove('visible');
+    }
+
+    function clearAlerts() {
+      document.getElementById('auth-error').classList.remove('visible');
+      document.getElementById('auth-success').classList.remove('visible');
+    }
+
+    function setLoading(btnId, loading) {
+      var btn = document.getElementById(btnId);
+      if (loading) {
+        btn.classList.add('loading');
+        btn.disabled = true;
+      } else {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    }
+
+    // ── Sign In ────────────────────────────────────────────────────────
+    async function handleSignIn(event) {
+      event.preventDefault();
+      clearAlerts();
+
+      var email    = document.getElementById('login-email').value.trim();
+      var password = document.getElementById('login-password').value;
+
+      if (!email || !password) {
+        showError('Please enter your email and password.');
+        return;
+      }
+
+      setLoading('signin-btn', true);
+
+      try {
+        if (typeof window.PondAuth === 'undefined') {
+          throw new Error('Auth module not loaded. Please refresh the page.');
+        }
+
+        var result = await window.PondAuth.signIn({ email: email, password: password });
+
+        if (result && result.error) {
+          throw result.error;
+        }
+
+        showSuccess('Signed in successfully. Redirecting…');
+
+        // First-time login → tour
+        var isFirstTime = result && result.isFirstTime;
+        setTimeout(function () {
+          window.location.href = isFirstTime
+            ? 'dashboard.html?tour=true'
+            : 'dashboard.html';
+        }, 800);
+
+      } catch (err) {
+        var msg = err && err.message ? err.message : 'Sign in failed. Please try again.';
+        // Sanitise common Supabase messages
+        if (/invalid login/i.test(msg) || /invalid credentials/i.test(msg)) {
+          msg = 'Invalid email or password.';
+        } else if (/email not confirmed/i.test(msg)) {
+          msg = 'Please verify your email before signing in.';
+        }
+        showError(msg);
+        setLoading('signin-btn', false);
+      }
+    }
+
+    // ── Sign Up ────────────────────────────────────────────────────────
+    async function handleSignUp(event) {
+      event.preventDefault();
+      clearAlerts();
+
+      var name     = document.getElementById('reg-name').value.trim();
+      var farmName = document.getElementById('reg-farm').value.trim();
+      var email    = document.getElementById('reg-email').value.trim();
+      var password = document.getElementById('reg-password').value;
+      var confirm  = document.getElementById('reg-confirm').value;
+
+      if (!name || !farmName || !email || !password || !confirm) {
+        showError('Please fill in all fields.');
+        return;
+      }
+
+      if (calcStrength(password) < 2) {
+        showError('Your password is too weak. Use at least 8 characters including a number or symbol.');
+        return;
+      }
+
+      if (password !== confirm) {
+        showError('Passwords do not match.');
+        return;
+      }
+
+      setLoading('signup-btn', true);
+
+      try {
+        if (typeof window.PondAuth === 'undefined') {
+          throw new Error('Auth module not loaded. Please refresh the page.');
+        }
+
+        var result = await window.PondAuth.signUp({
+          email:     email,
+          password:  password,
+          name:      name,
+          farm_name: farmName
+        });
+
+        if (result && result.error) {
+          throw result.error;
+        }
+
+        // Supabase may require email confirmation
+        var needsConfirm = result && result.needsConfirm;
+        if (needsConfirm) {
+          showSuccess('Account created! Check your email to confirm your address before signing in.');
+          setLoading('signup-btn', false);
+        } else {
+          showSuccess('Account created! Redirecting to your dashboard…');
+          setTimeout(function () {
+            window.location.href = 'dashboard.html?tour=true';
+          }, 1000);
+        }
+
+      } catch (err) {
+        var msg = err && err.message ? err.message : 'Registration failed. Please try again.';
+        if (/already registered/i.test(msg) || /already exists/i.test(msg)) {
+          msg = 'An account with this email already exists. Try signing in.';
+        }
+        showError(msg);
+        setLoading('signup-btn', false);
+      }
+    }
+  </script>
+</body>
+</html>

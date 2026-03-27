@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="PondMaster dashboard — manage your tilapia ponds, track growth and harvest forecasts." />
+  <title>PondMaster — Dashboard</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0D1117" />
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- Offline bar -->
+  <div class="offline-bar">No internet — working offline</div>
+
+  <!-- App shell -->
+  <div class="app-shell">
+
+    <!-- ═══════════════════════════════════════════════════
+         SIDEBAR (hidden on mobile)
+         ═══════════════════════════════════════════════════ -->
+    <aside class="sidebar" aria-label="Main navigation">
+
+      <!-- Logo -->
+      <div class="sidebar-logo">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+          <ellipse cx="10" cy="14" rx="8" ry="5" fill="var(--accent-blue)" opacity="0.85"/>
+          <ellipse cx="10" cy="14" rx="5" ry="3" fill="var(--accent-green)" opacity="0.9"/>
+          <circle cx="8" cy="13" r="1" fill="var(--bg-card)"/>
+          <path d="M18 14 C20 10, 26 10, 26 14 C26 18, 20 18, 18 14Z" fill="var(--accent-orange)" opacity="0.9"/>
+        </svg>
+        <span class="sidebar-logo-text">PondMaster</span>
+      </div>
+
+      <!-- Nav links -->
+      <nav class="sidebar-nav" aria-label="Primary">
+        <a href="dashboard.html" class="sidebar-link active" aria-current="page">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </a>
+        <a href="calendar.html" class="sidebar-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Calendar
+        </a>
+        <a href="reports.html" class="sidebar-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Reports
+        </a>
+        <a href="settings.html" class="sidebar-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </a>
+
+        <div class="sidebar-divider"></div>
+
+        <a href="#" class="sidebar-link sidebar-signout" id="btn-sidebar-signout">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign Out
+        </a>
+      </nav>
+
+      <!-- User info -->
+      <div class="sidebar-user" id="sidebar-user-info">
+        <div class="sidebar-user-farm" id="sidebar-farm-name">My Farm</div>
+        <div class="sidebar-user-email" id="sidebar-email">—</div>
+      </div>
+
+    </aside>
+
+    <!-- ═══════════════════════════════════════════════════
+         MAIN CONTENT
+         ═══════════════════════════════════════════════════ -->
+    <main class="main-content" id="main-content">
+
+      <!-- Top bar -->
+      <header class="topbar">
+        <button class="hamburger" id="btn-hamburger" aria-label="Open menu" aria-expanded="false">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <h1 class="topbar-title">PondMaster</h1>
+        <div class="topbar-actions">
+          <span class="last-synced-label text-muted" id="last-synced" title="Last synced"></span>
+          <button class="btn-icon" id="btn-sync" aria-label="Sync data" title="Sync">
+            <span aria-hidden="true">🔄</span>
+          </button>
+          <button class="btn-icon" id="btn-theme-toggle" aria-label="Toggle theme" title="Toggle theme">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Page body -->
+      <div class="page-body">
+
+        <!-- ── Onboarding checklist ──────────────────────────── -->
+        <div class="card onboarding-checklist" id="onboarding-checklist">
+          <button class="onboarding-toggle" id="onboarding-toggle" aria-expanded="true" aria-controls="onboarding-steps">
+            <span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              Getting Started
+            </span>
+            <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div id="onboarding-steps">
+            <p class="text-muted" style="font-size:13px;margin-bottom:12px">Complete these steps to get the most out of PondMaster.</p>
+            <ul class="onboarding-steps-list">
+              <li class="onboarding-step" data-step="pond">
+                <input type="checkbox" id="ob-pond" disabled />
+                <label for="ob-pond">Add your first pond</label>
+              </li>
+              <li class="onboarding-step" data-step="lot">
+                <input type="checkbox" id="ob-lot" disabled />
+                <label for="ob-lot">Add your first lot (species + fingerlings)</label>
+              </li>
+              <li class="onboarding-step" data-step="log">
+                <input type="checkbox" id="ob-log" disabled />
+                <label for="ob-log">Log your first daily feed</label>
+              </li>
+              <li class="onboarding-step" data-step="ai">
+                <input type="checkbox" id="ob-ai" disabled />
+                <label for="ob-ai">Set up AI advisor (add API key in <a href="settings.html">Settings</a>)</label>
+              </li>
+              <li class="onboarding-step" data-step="worker">
+                <input type="checkbox" id="ob-worker" disabled />
+                <label for="ob-worker">Share worker card with your pond worker</label>
+              </li>
+              <li class="onboarding-step" data-step="harvest">
+                <input type="checkbox" id="ob-harvest" disabled />
+                <label for="ob-harvest">Check harvest forecast in Financials tab</label>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ── Summary cards ─────────────────────────────────── -->
+        <div class="summary-cards-scroll">
+          <div class="summary-cards" id="summary-cards">
+
+            <div class="summary-card">
+              <div class="summary-card-label">Total Fish Stocked</div>
+              <div class="summary-card-value" id="total-fish">—</div>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-card-label">Days to Next Harvest</div>
+              <div class="summary-card-value" id="days-harvest">—</div>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-card-label">Feed Cost This Week MWK</div>
+              <div class="summary-card-value" id="weekly-feed-cost">—</div>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-card-label">Projected Revenue MWK</div>
+              <div class="summary-card-value" id="projected-revenue">—</div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ── Harvest timeline ──────────────────────────────── -->
+        <div class="card" id="harvest-timeline-card">
+          <div class="card-header">
+            <h2 class="card-title">Harvest Timeline</h2>
+          </div>
+          <div class="harvest-timeline" id="harvest-timeline" aria-label="Pond harvest dates">
+            <div class="text-muted" style="font-size:14px">Loading harvest timeline…</div>
+          </div>
+        </div>
+
+        <!-- ── All ponds today ───────────────────────────────── -->
+        <div class="card" id="all-ponds-today-card">
+          <div class="card-header">
+            <h2 class="card-title">All Ponds Today</h2>
+          </div>
+          <div id="all-ponds-today" class="all-ponds-today-summary">
+            <span>Total feed needed: <strong id="today-total-feed">—</strong> kg</span>
+            <span class="separator" aria-hidden="true">|</span>
+            <span>Total mortality today: <strong id="today-total-mortality">—</strong> fish</span>
+          </div>
+        </div>
+
+        <!-- ── Alerts ────────────────────────────────────────── -->
+        <div class="card" id="alerts-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--alert-red)" stroke-width="2" style="margin-right:6px;vertical-align:-2px" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Health Alerts
+            </h2>
+          </div>
+          <div id="alerts-feed">
+            <div class="text-muted" style="font-size:14px">Loading alerts…</div>
+          </div>
+        </div>
+
+        <!-- ── Ponds section ─────────────────────────────────── -->
+        <section class="ponds-section" aria-labelledby="ponds-heading">
+          <div class="section-header">
+            <h2 class="section-title" id="ponds-heading">Your Ponds</h2>
+            <span class="badge badge-neutral" id="pond-count">0 of 3 ponds used</span>
+          </div>
+
+          <!-- Pond cards grid -->
+          <div class="card-grid" id="pond-cards-grid"></div>
+
+          <!-- Empty state -->
+          <div class="empty-state" id="pond-empty-state" style="display:none" role="status">
+            <div class="empty-state-illustration" aria-hidden="true">
+              <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                <ellipse cx="40" cy="48" rx="30" ry="12" fill="var(--accent-blue)" opacity="0.18"/>
+                <ellipse cx="40" cy="45" rx="18" ry="8" fill="var(--accent-blue)" opacity="0.25"/>
+                <ellipse cx="40" cy="42" rx="11" ry="5" fill="var(--accent-green)" opacity="0.7"/>
+                <ellipse cx="40" cy="41" rx="7" ry="3" fill="var(--accent-green)" opacity="0.9"/>
+                <circle cx="37" cy="40" r="1.2" fill="white" opacity="0.8"/>
+                <path d="M51 42 C54 38, 60 38, 60 42 C60 46, 54 46, 51 42Z" fill="var(--accent-orange)" opacity="0.85"/>
+              </svg>
+            </div>
+            <h3 class="empty-state-title">No ponds yet</h3>
+            <p class="empty-state-body">Add your first pond to start tracking growth, feed, and harvest forecasts.</p>
+            <button class="btn btn-primary" onclick="window.PondApp?.openModal('modal-add-pond')">
+              + Add your first pond
+            </button>
+          </div>
+        </section>
+
+      </div><!-- /page-body -->
+
+    </main><!-- /main-content -->
+
+    <!-- ═══════════════════════════════════════════════════
+         BOTTOM NAV (mobile)
+         ═══════════════════════════════════════════════════ -->
+    <nav class="bottom-nav" aria-label="Mobile navigation">
+      <a href="dashboard.html" class="bottom-nav-item active" aria-current="page">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span>Home</span>
+      </a>
+      <a href="dashboard.html#ponds" class="bottom-nav-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 17l4-8 4 4 4-6 4 10H3z"/></svg>
+        <span>Ponds</span>
+      </a>
+      <a href="calendar.html" class="bottom-nav-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>Calendar</span>
+      </a>
+      <a href="pond.html?tab=chat" class="bottom-nav-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>Chat</span>
+      </a>
+      <a href="settings.html" class="bottom-nav-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Settings</span>
+      </a>
+    </nav>
+
+  </div><!-- /app-shell -->
+
+  <!-- FAB: Add pond -->
+  <button class="fab" id="fab-add-pond" aria-label="Add new pond" title="Add pond">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ═══════════════════════════════════════════════════
+       MODAL: Add Pond
+       ═══════════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-add-pond" role="dialog" aria-modal="true" aria-labelledby="modal-add-pond-title" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-add-pond-title">Add New Pond</h2>
+        <button class="modal-close" onclick="window.PondApp?.closeModal('modal-add-pond')" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="form-add-pond" class="modal-body" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="pond-name">Pond name <span class="required">*</span></label>
+          <input class="form-input" type="text" id="pond-name" name="pond_name" placeholder="e.g. Pond A" required maxlength="80" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pond-number">Pond number</label>
+          <input class="form-input" type="number" id="pond-number" name="pond_number" placeholder="e.g. 1" min="1" max="9999" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="pond-length">Length (m)</label>
+            <input class="form-input" type="number" id="pond-length" name="length_m" placeholder="e.g. 20" min="0.1" max="9999" step="0.1" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="pond-width">Width (m)</label>
+            <input class="form-input" type="number" id="pond-width" name="width_m" placeholder="e.g. 10" min="0.1" max="9999" step="0.1" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="pond-depth">Depth (m)</label>
+            <input class="form-input" type="number" id="pond-depth" name="depth_m" placeholder="e.g. 1.5" min="0.1" max="20" step="0.1" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pond-liner">Liner type</label>
+          <select class="form-select" id="pond-liner" name="liner_type">
+            <option value="">Select liner type</option>
+            <option value="Earth">Earth</option>
+            <option value="Black LDPE">Black LDPE</option>
+            <option value="Black HDPE">Black HDPE</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pond-water-source">Water source</label>
+          <select class="form-select" id="pond-water-source" name="water_source">
+            <option value="">Select water source</option>
+            <option value="Borehole">Borehole</option>
+            <option value="River">River</option>
+            <option value="Rain">Rain</option>
+            <option value="Municipal">Municipal</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pond-aeration">Aeration type</label>
+          <select class="form-select" id="pond-aeration" name="aeration_type">
+            <option value="">Select aeration type</option>
+            <option value="None">None</option>
+            <option value="Paddle wheel">Paddle wheel</option>
+            <option value="Air pump">Air pump</option>
+            <option value="Diffuser">Diffuser</option>
+            <option value="Multiple">Multiple</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="window.PondApp?.closeModal('modal-add-pond')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Pond</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       MODAL: Add Lot
+       ═══════════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-add-lot" role="dialog" aria-modal="true" aria-labelledby="modal-add-lot-title" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-add-lot-title">Add Lot</h2>
+        <button class="modal-close" onclick="window.PondApp?.closeModal('modal-add-lot')" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="form-add-lot" class="modal-body" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="lot-pond">Pond <span class="required">*</span></label>
+          <select class="form-select" id="lot-pond" name="pond_id" required>
+            <option value="">Select a pond</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="lot-species">Species <span class="required">*</span></label>
+          <select class="form-select" id="lot-species" name="species" required>
+            <option value="">Select species</option>
+            <option value="Nile Tilapia">Nile Tilapia</option>
+            <option value="Chambo O.shiranus">Chambo O.shiranus</option>
+            <option value="Chambo O.karongae">Chambo O.karongae</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="lot-stock-type">Stock type</label>
+          <select class="form-select" id="lot-stock-type" name="stock_type">
+            <option value="">Select stock type</option>
+            <option value="Monosex male">Monosex male</option>
+            <option value="Mixed sex">Mixed sex</option>
+            <option value="Unknown">Unknown</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="lot-fingerlings">Fingerlings stocked <span class="required">*</span></label>
+          <input class="form-input" type="number" id="lot-fingerlings" name="fingerlings_stocked" placeholder="e.g. 2500" min="1" max="500000" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="lot-stocking-date">Stocking date <span class="required">*</span></label>
+          <input class="form-input" type="date" id="lot-stocking-date" name="stocking_date" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="lot-target-harvest">Target harvest month</label>
+          <select class="form-select" id="lot-target-harvest" name="target_harvest_months">
+            <option value="">Select target</option>
+            <option value="5">Month 5</option>
+            <option value="6">Month 6</option>
+            <option value="7">Month 7</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="lot-fingerling-source">Fingerling source</label>
+          <input class="form-input" type="text" id="lot-fingerling-source" name="fingerling_source" placeholder="e.g. Government hatchery" maxlength="200" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="lot-fingerling-cost">Fingerling cost (MWK)</label>
+          <input class="form-input" type="number" id="lot-fingerling-cost" name="fingerling_cost_mwk" placeholder="e.g. 50000" min="0" step="100" />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="window.PondApp?.closeModal('modal-add-lot')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Lot</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       SCRIPTS
+       ═══════════════════════════════════════════════════ -->
+  <script src="js/config.js" defer></script>
+  <script src="js/theme.js" defer></script>
+  <script src="js/supabase.js" defer></script>
+  <script src="js/app.js" defer></script>
+  <script src="js/growth.js" defer></script>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', async function() {
+    // Wait for supabase to be ready
+    const user = await window.supabaseClient?.auth.getUser();
+    if (!user?.data?.user) { window.location.href = 'auth.html'; return; }
+
+    // Populate user info in sidebar
+    const u = user.data.user;
+    const emailEl = document.getElementById('sidebar-email');
+    if (emailEl) emailEl.textContent = u.email || '—';
+    const farmEl = document.getElementById('sidebar-farm-name');
+    if (farmEl && u.user_metadata?.farm_name) farmEl.textContent = u.user_metadata.farm_name;
+
+    // Sign out
+    document.getElementById('btn-sidebar-signout')?.addEventListener('click', async function(e) {
+      e.preventDefault();
+      await window.supabaseClient.auth.signOut();
+      window.location.href = 'auth.html';
+    });
+
+    // Onboarding toggle
+    const obToggle = document.getElementById('onboarding-toggle');
+    const obSteps = document.getElementById('onboarding-steps');
+    if (obToggle && obSteps) {
+      obToggle.addEventListener('click', function() {
+        const expanded = this.getAttribute('aria-expanded') === 'true';
+        this.setAttribute('aria-expanded', String(!expanded));
+        obSteps.style.display = expanded ? 'none' : '';
+      });
+    }
+
+    // Hamburger (mobile)
+    document.getElementById('btn-hamburger')?.addEventListener('click', function() {
+      const sidebar = document.querySelector('.sidebar');
+      if (!sidebar) return;
+      const open = sidebar.classList.toggle('sidebar-open');
+      this.setAttribute('aria-expanded', String(open));
+    });
+
+    // Check for tour
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tour') === 'true' && window.PondTour) {
+      window.PondTour.start();
+    }
+
+    // Load dashboard data
+    loadDashboard(u.id);
+  });
+
+  async function loadDashboard(userId) {
+    try {
+      const ponds = await window.PondDB.getPonds(userId);
+      renderPondCards(ponds);
+      renderSummaryCards(userId, ponds);
+      renderAlerts(ponds);
+      updateOnboardingChecklist();
+    } catch(e) {
+      window.PondApp?.showToast('Failed to load dashboard: ' + e.message, 'error');
+    }
+  }
+
+  function renderPondCards(ponds) {
+    const grid = document.getElementById('pond-cards-grid');
+    const empty = document.getElementById('pond-empty-state');
+    const countBadge = document.getElementById('pond-count');
+
+    if (!grid) return;
+
+    const active = ponds.filter(p => p.status !== 'archived');
+    const limit = window.PondApp?.config?.maxPondsFree || 3;
+    if (countBadge) countBadge.textContent = `${active.length} of ${limit} ponds used`;
+
+    if (!ponds.length) {
+      grid.style.display = 'none';
+      if (empty) empty.style.display = 'flex';
+      return;
+    }
+
+    if (empty) empty.style.display = 'none';
+    grid.style.display = '';
+    grid.innerHTML = ponds.map(pond => `
+      <div class="card pond-card" onclick="window.location.href='pond.html?id=${pond.id}'" data-id="${pond.id}" role="button" tabindex="0" aria-label="View ${pond.pond_name}">
+        <div class="flex flex-between mb-8">
+          <strong>${pond.pond_name}</strong>
+          <span class="badge badge-${pond.status === 'active' ? 'active' : 'warning'}">${pond.status}</span>
+        </div>
+        <div class="text-muted" style="font-size:13px">
+          ${pond.length_m || '?'}m × ${pond.width_m || '?'}m × ${pond.depth_m || '?'}m
+          ${pond.volume_m3 ? `· ${pond.volume_m3.toFixed(0)} m³` : ''}
+        </div>
+        <div class="flex flex-between mt-8" style="font-size:13px;color:var(--text-secondary)">
+          <span>${pond.liner_type || 'No liner set'}</span>
+          <span>${pond.aeration_type || 'No aeration'}</span>
+        </div>
+      </div>
+    `).join('');
+
+    // Keyboard navigation for pond cards
+    grid.querySelectorAll('.pond-card').forEach(card => {
+      card.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          this.click();
+        }
+      });
+    });
+  }
+
+  async function renderSummaryCards(userId, ponds) {
+    let totalFish = 0, totalFeedCost = 0, minDaysToHarvest = null;
+    for (const pond of ponds.filter(p => p.status === 'active')) {
+      try {
+        const lot = await window.PondDB.getActiveLot(pond.id);
+        if (lot) {
+          totalFish += lot.fingerlings_stocked || 0;
+          const target = lot.target_harvest_date ? new Date(lot.target_harvest_date) : null;
+          if (target) {
+            const days = Math.round((target - new Date()) / 86400000);
+            if (minDaysToHarvest === null || days < minDaysToHarvest) minDaysToHarvest = days;
+          }
+        }
+        const { cost_mwk } = await window.PondDB.getWeeklyFeedTotal(pond.id);
+        totalFeedCost += cost_mwk;
+      } catch(e) { /* skip */ }
+    }
+    const tf = document.getElementById('total-fish');
+    const dh = document.getElementById('days-harvest');
+    const wf = document.getElementById('weekly-feed-cost');
+    if (tf) tf.textContent = totalFish.toLocaleString();
+    if (dh) dh.textContent = minDaysToHarvest !== null ? (minDaysToHarvest > 0 ? `${minDaysToHarvest} days` : 'Ready!') : '—';
+    if (wf) wf.textContent = window.PondApp?.formatMWK ? window.PondApp.formatMWK(totalFeedCost) : `MWK ${totalFeedCost.toLocaleString()}`;
+  }
+
+  async function renderAlerts(ponds) {
+    const feed = document.getElementById('alerts-feed');
+    if (!feed) return;
+    let html = '';
+    for (const pond of ponds.filter(p => p.status === 'active')) {
+      try {
+        const events = await window.PondDB.getOpenEvents(pond.id);
+        const critical = events.filter(e => e.severity === 'CRITICAL' || e.severity === 'HIGH');
+        critical.forEach(ev => {
+          html += `<div class="card" style="border-left:4px solid var(--alert-red);margin-bottom:8px">
+            <div class="flex flex-between"><strong style="color:var(--alert-red)">${ev.severity}: ${ev.event_type}</strong><span class="text-muted" style="font-size:12px">${pond.pond_name}</span></div>
+            <div class="text-secondary" style="font-size:13px;margin-top:4px">${ev.symptoms || ''}</div>
+          </div>`;
+        });
+      } catch(e) { /* skip */ }
+    }
+    feed.innerHTML = html || '<div class="text-muted" style="font-size:14px">No active health alerts</div>';
+  }
+
+  function updateOnboardingChecklist() {
+    const progress = JSON.parse(localStorage.getItem('pm_onboarding_progress') || '{}');
+    const steps = ['pond', 'lot', 'log', 'ai', 'worker', 'harvest'];
+    const allDone = steps.every(s => progress[s]);
+    const checklist = document.getElementById('onboarding-checklist');
+    if (allDone && checklist) {
+      checklist.style.display = 'none';
+      return;
+    }
+    // Reflect progress in checkboxes
+    steps.forEach(s => {
+      const cb = document.getElementById('ob-' + s);
+      if (cb) cb.checked = !!progress[s];
+      const li = document.querySelector(`.onboarding-step[data-step="${s}"]`);
+      if (li) li.classList.toggle('done', !!progress[s]);
+    });
+  }
+
+  document.getElementById('fab-add-pond')?.addEventListener('click', () => window.PondApp?.openModal('modal-add-pond'));
+
+  document.getElementById('form-add-pond')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('button[type=submit]');
+    btn.disabled = true;
+    btn.textContent = 'Creating…';
+    try {
+      const user = (await window.supabaseClient.auth.getUser()).data.user;
+      const data = Object.fromEntries(new FormData(this));
+      ['length_m', 'width_m', 'depth_m'].forEach(f => { if (data[f]) data[f] = parseFloat(data[f]); });
+      if (data.pond_number) data.pond_number = parseInt(data.pond_number);
+      await window.PondDB.createPond(user.id, data);
+      window.PondApp?.closeModal('modal-add-pond');
+      window.PondApp?.showToast('Pond created!', 'success');
+      loadDashboard(user.id);
+      this.reset();
+      // Update onboarding
+      const p = JSON.parse(localStorage.getItem('pm_onboarding_progress') || '{}');
+      p.pond = true;
+      localStorage.setItem('pm_onboarding_progress', JSON.stringify(p));
+      updateOnboardingChecklist();
+    } catch(err) {
+      window.PondApp?.showToast(err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Create Pond';
+    }
+  });
+
+  document.getElementById('form-add-lot')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('button[type=submit]');
+    btn.disabled = true;
+    btn.textContent = 'Adding…';
+    try {
+      const user = (await window.supabaseClient.auth.getUser()).data.user;
+      const data = Object.fromEntries(new FormData(this));
+      if (data.fingerlings_stocked) data.fingerlings_stocked = parseInt(data.fingerlings_stocked);
+      if (data.fingerling_cost_mwk) data.fingerling_cost_mwk = parseFloat(data.fingerling_cost_mwk);
+      if (data.target_harvest_months) data.target_harvest_months = parseInt(data.target_harvest_months);
+      await window.PondDB.createLot(user.id, data);
+      window.PondApp?.closeModal('modal-add-lot');
+      window.PondApp?.showToast('Lot added!', 'success');
+      loadDashboard(user.id);
+      this.reset();
+      // Update onboarding
+      const p = JSON.parse(localStorage.getItem('pm_onboarding_progress') || '{}');
+      p.lot = true;
+      localStorage.setItem('pm_onboarding_progress', JSON.stringify(p));
+      updateOnboardingChecklist();
+    } catch(err) {
+      window.PondApp?.showToast(err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Add Lot';
+    }
+  });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,124 @@
+name: Build Android TWA
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Bubblewrap CLI
+        run: npm install -g @bubblewrap/cli
+
+      - name: Initialize TWA project
+        run: |
+          mkdir -p twa-build && cd twa-build
+          cat > twa-manifest.json << 'EOF'
+          {
+            "packageId": "com.pondmaster.app",
+            "host": "sbperete.github.io",
+            "name": "PondMaster",
+            "launcherName": "PondMaster",
+            "display": "standalone",
+            "orientation": "portrait",
+            "themeColor": "#1A5276",
+            "backgroundColor": "#0D1117",
+            "startUrl": "/pondmaster/",
+            "iconUrl": "https://sbperete.github.io/pondmaster/icons/icon-512.png",
+            "maskableIconUrl": "https://sbperete.github.io/pondmaster/icons/icon-512.png",
+            "shortcuts": [],
+            "enableNotifications": true,
+            "minSdkVersion": 19,
+            "targetSdkVersion": 34,
+            "compileSdkVersion": 34,
+            "signingKey": {
+              "path": "../release.keystore",
+              "alias": "pondmaster"
+            },
+            "appVersionName": "1.0.0",
+            "appVersionCode": 1,
+            "isChromeOSOnly": false,
+            "isMetaQuest": false,
+            "fullScopeUrl": "https://sbperete.github.io/pondmaster/",
+            "locationDelegationEnabled": false,
+            "generatorApp": "bubblewrap-cli"
+          }
+          EOF
+
+      - name: Generate keystore
+        run: |
+          keytool -genkeypair \
+            -v \
+            -keystore release.keystore \
+            -alias pondmaster \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
+            -keypass "${{ secrets.KEYSTORE_PASSWORD }}" \
+            -dname "CN=PondMaster, OU=Mobile, O=PondMaster, L=Lilongwe, S=Central, C=MW"
+
+      - name: Initialize Bubblewrap
+        working-directory: twa-build
+        run: |
+          bubblewrap init --manifest https://sbperete.github.io/pondmaster/manifest.json \
+            --directory ./ || true
+
+      - name: Build APK and AAB
+        working-directory: twa-build
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          bubblewrap build \
+            --skipPwaValidation || true
+          # Fallback: build with gradle directly if bubblewrap fails
+          if [ -f "app/build.gradle" ]; then
+            chmod +x gradlew
+            ./gradlew assembleRelease bundleRelease \
+              -Pandroid.injected.signing.store.file=../release.keystore \
+              -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+              -Pandroid.injected.signing.key.alias=pondmaster \
+              -Pandroid.injected.signing.key.password=${{ secrets.KEYSTORE_PASSWORD }}
+          fi
+
+      - name: Rename outputs
+        run: |
+          find . -name "*.apk" -exec cp {} pondmaster-release.apk \; 2>/dev/null || true
+          find . -name "*.aab" -exec cp {} pondmaster-release.aab \; 2>/dev/null || true
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pondmaster-apk
+          path: pondmaster-release.apk
+          if-no-files-found: warn
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pondmaster-aab
+          path: pondmaster-release.aab
+          if-no-files-found: warn
+
+      - name: Get keystore SHA-256 fingerprint
+        run: |
+          keytool -list -v \
+            -keystore release.keystore \
+            -alias pondmaster \
+            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
+            | grep "SHA256:" | head -1

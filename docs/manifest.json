@@ -1,0 +1,74 @@
+{
+  "name": "PondMaster - Tilapia Farm Manager",
+  "short_name": "PondMaster",
+  "description": "Complete tilapia pond management for African farmers. Track growth, feed schedules, health events and harvest revenue. AI-powered advisor included.",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay","standalone","minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#1A5276",
+  "theme_color": "#1A5276",
+  "start_url": "/pondmaster/?source=pwa",
+  "scope": "/pondmaster/",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["agriculture","productivity","business","utilities"],
+  "icons": [
+    {"src":"icons/icon-72.png","sizes":"72x72","type":"image/png","purpose":"any"},
+    {"src":"icons/icon-96.png","sizes":"96x96","type":"image/png","purpose":"any"},
+    {"src":"icons/icon-128.png","sizes":"128x128","type":"image/png","purpose":"any"},
+    {"src":"icons/icon-144.png","sizes":"144x144","type":"image/png","purpose":"maskable any"},
+    {"src":"icons/icon-152.png","sizes":"152x152","type":"image/png","purpose":"any"},
+    {"src":"icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"maskable any"},
+    {"src":"icons/icon-384.png","sizes":"384x384","type":"image/png","purpose":"any"},
+    {"src":"icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"maskable any"}
+  ],
+  "screenshots": [
+    {
+      "src":"screenshots/screenshot-mobile.png",
+      "sizes":"390x844","type":"image/png",
+      "form_factor":"narrow",
+      "label":"Dashboard showing pond summary cards"
+    },
+    {
+      "src":"screenshots/screenshot-tablet.png",
+      "sizes":"768x1024","type":"image/png",
+      "form_factor":"wide",
+      "label":"Pond detail with growth chart"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name":"Add Daily Log","short_name":"Log Feed",
+      "url":"/pondmaster/pond.html?tab=log",
+      "icons":[{"src":"icons/icon-96.png","sizes":"96x96"}]
+    },
+    {
+      "name":"View Calendar","short_name":"Calendar",
+      "url":"/pondmaster/calendar.html",
+      "icons":[{"src":"icons/icon-96.png","sizes":"96x96"}]
+    },
+    {
+      "name":"AI Advisor","short_name":"AI Chat",
+      "url":"/pondmaster/pond.html?tab=chat",
+      "icons":[{"src":"icons/icon-96.png","sizes":"96x96"}]
+    }
+  ],
+  "share_target": {
+    "action":"/pondmaster/share-target.html",
+    "method":"GET",
+    "params":{"title":"title","text":"text","url":"url"}
+  },
+  "related_applications": [
+    {
+      "platform":"play",
+      "url":"https://play.google.com/store/apps/details?id=com.pondmaster.app",
+      "id":"com.pondmaster.app"
+    },
+    {
+      "platform":"windows",
+      "url":"ms-windows-store://pdp/?productid=PONDMASTER"
+    }
+  ],
+  "prefer_related_applications": false,
+  "edge_side_panel": {"preferred_width": 400}
+}

@@ -1,0 +1,57 @@
+name: Build Windows MSIX
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install PWABuilder CLI
+        run: npm install -g @pwabuilder/cli
+
+      - name: Package PWA for Windows
+        run: |
+          pwabuilder package \
+            --url "https://sbperete.github.io/pondmaster/" \
+            --platform windows \
+            --output ./msix-output
+        continue-on-error: true
+
+      - name: Fallback — fetch MSIX via PWABuilder API
+        if: failure()
+        shell: bash
+        run: |
+          mkdir -p msix-output
+          curl -X POST \
+            "https://pwabuilder-windows-docker.azurewebsites.net/msix/generatezip" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "url": "https://sbperete.github.io/pondmaster/",
+              "name": "PondMaster",
+              "packageId": "PondMaster.TilapiaPondManagement",
+              "version": "1.0.0.0",
+              "publisherDisplayName": "PondMaster",
+              "publisher": "'"${{ secrets.MS_PUBLISHER_CN }}"'",
+              "generateModernPackage": true
+            }' \
+            --output msix-output/pondmaster-msix.zip \
+            --max-time 120
+
+      - name: Upload MSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pondmaster-msix
+          path: msix-output/
+          if-no-files-found: warn

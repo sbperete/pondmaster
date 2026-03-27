@@ -1,0 +1,26 @@
+{
+  "name": "pondmaster",
+  "version": "1.0.0",
+  "description": "Tilapia pond management PWA for African farmers",
+  "private": true,
+  "scripts": {
+    "dev": "http-server docs -p 8080 -c-1 --cors -o",
+    "build": "npm run generate-icons && npm run validate",
+    "generate-icons": "node scripts/generate-icons.js",
+    "validate": "node scripts/validate.js",
+    "deploy": "powershell scripts/deploy-all.ps1",
+    "deploy:gh": "git push origin main",
+    "deploy:cf": "wrangler pages deploy docs --project-name=pondmaster",
+    "package:stores": "powershell scripts/package-stores.ps1",
+    "setup": "powershell scripts/setup.ps1",
+    "release": "gh workflow run release.yml"
+  },
+  "keywords": ["aquaculture","tilapia","malawi","zambia","zimbabwe","pwa","farming","fish-farm","pond-management","agriculture","africa","cooperative","mobile-app"],
+  "author": "Steven Mwenye",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "sharp": "^0.33.0",
+    "wrangler": "^3.0.0"
+  }
+}

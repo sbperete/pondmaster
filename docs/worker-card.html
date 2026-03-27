@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Worker Feed Card — PondMaster</title>
+<!--
+  WORKER CARD — Zero external dependencies. All CSS inline.
+  Target: <30KB total. Loads in <3s on 2G.
+  No Supabase SDK, no Chart.js, no CDN calls.
+-->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:18px;background:#f5f5f5;color:#1a1a1a;padding:0;min-height:100vh}
+.card{background:white;border-radius:10px;padding:16px;margin-bottom:12px;border:1px solid #ddd;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+.header{background:#1A5276;color:white;padding:16px;text-align:center}
+.header h1{font-size:20px;font-weight:700;margin-bottom:2px}
+.header .subtitle{font-size:14px;opacity:0.85}
+.main{padding:12px}
+.section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#555;margin-bottom:8px}
+.feed-row{display:flex;align-items:center;gap:12px;padding:12px;background:#f0f8f0;border-radius:8px;border:1px solid #c8e6c9;margin-bottom:8px}
+.feed-time{font-size:13px;font-weight:700;color:#1E8449;min-width:70px}
+.feed-amount{font-size:26px;font-weight:700;color:#1a1a1a}
+.feed-type{font-size:13px;color:#555}
+.checklist-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #eee;font-size:16px}
+.checklist-item:last-child{border-bottom:none}
+.check-box{width:24px;height:24px;border:2px solid #ccc;border-radius:4px;flex-shrink:0;margin-top:2px}
+.emergency{background:#fff3f3;border:2px solid #C0392B;border-radius:10px;padding:16px;margin-bottom:12px}
+.emergency-title{color:#C0392B;font-size:17px;font-weight:700;margin-bottom:8px}
+.emergency-text{font-size:16px;color:#1a1a1a;line-height:1.5}
+.weigh-reminder{background:#fff8e1;border:2px solid #F39C12;border-radius:10px;padding:14px;margin-bottom:12px}
+.phase-badge{display:inline-block;background:#1A5276;color:white;border-radius:20px;padding:4px 12px;font-size:13px;font-weight:600}
+.footer{text-align:center;font-size:12px;color:#888;padding:16px;border-top:1px solid #eee}
+.lang-toggle{display:flex;gap:0;border:1px solid #ccc;border-radius:6px;overflow:hidden;margin-bottom:12px;width:fit-content}
+.lang-btn{padding:6px 14px;font-size:13px;font-weight:600;border:none;background:white;cursor:pointer;color:#555}
+.lang-btn.active{background:#1A5276;color:white}
+.error-state{text-align:center;padding:48px 24px}
+.error-state h2{font-size:20px;color:#C0392B;margin-bottom:8px}
+.error-state p{color:#555;font-size:15px}
+.qr-placeholder{text-align:center;margin:12px 0;font-size:12px;color:#aaa}
+@media print{
+  .lang-toggle,.print-btn,.footer-btns{display:none!important}
+  body{background:white}
+  .card{box-shadow:none;border:1px solid #ccc}
+}
+.print-btn{width:100%;padding:14px;background:#1A5276;color:white;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:8px}
+.print-btn:active{opacity:0.85}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="header">
+    <div style="font-size:24px;margin-bottom:4px">🐟</div>
+    <h1 id="card-title">PondMaster</h1>
+    <div class="subtitle" id="card-subtitle">Loading...</div>
+  </div>
+  <div class="main" id="main-content">
+    <div style="text-align:center;padding:32px;color:#888">Loading worker card...</div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// ZERO EXTERNAL DEPENDENCIES — all vanilla JS
+// ============================================================
+
+const TODAY = new Date().toISOString().split('T')[0];
+const TODAY_DISPLAY = new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+let currentLang = localStorage.getItem('pm_worker_lang') || 'en';
+
+const T = {
+  en: {
+    morning:'Morning Feed', evening:'Evening Feed', singleMeal:'Single Feed (Morning Only)',
+    feedType:'Feed Type', spreadEvenly:'Spread evenly across the pond',
+    watchFor:'WATCH FOR TODAY', checkList:['Check if fish are eating (15 min after feeding)','Remove any uneaten feed after 30 minutes','Count and remove dead fish — record in app','Check water colour: green = good, brown/black = problem'],
+    deadFish:'Dead fish today:', recordApp:'Record count in the app',
+    emergency:'🚨 EMERGENCY — CALL FARM OWNER NOW', gaspingText:'If fish are GASPING at the surface — this is an OXYGEN EMERGENCY',
+    gaspingSteps:['Stop feeding immediately','Switch on ALL aerators at maximum speed','Call farm owner right now','Do NOT leave the pond'],
+    weighDay:'⚖️ WEIGH DAY — Weigh 10 fish today',weighInstructions:'Weigh 10 random fish from different parts of the pond. Record average weight in the app.',
+    validUntil:'Valid until', expiredMsg:'This link has expired. Ask the farm owner to generate a new worker card.',
+    phase:'Growth Phase', weekNum:'Week', print:'Print This Card',
+    today:'Today', noTokenMsg:'No worker card token found in URL.',
+    langLabel:'Language',
+  },
+  ny: {
+    morning:'Chakudya Mmawa', evening:'Chakudya Madzulo', singleMeal:'Kudyetsa Kamodzi (Mmawa Chabe)',
+    feedType:'Mtundu wa Chakudya', spreadEvenly:'Sasani chakudya mofananamo pa dzinje lonse',
+    watchFor:'CHINDIKIRO LERO', checkList:['Onani ngati nsomba zikudya (mphindi 15 pambuyo)','Chotsani chakudya chosadyedwa mphindi 30','Weinela ndi kutulutsani nsomba zakufa — lemba mu app','Onani barwa ya madzi: zitaka = zabwino, yakuda = vuto'],
+    deadFish:'Nsomba zakufa lero:', recordApp:'Lemba chiwerengero mu app',
+    emergency:'🚨 POGWIRA MFUKUFUKU — YITANANI MWINI LERO LERO', gaspingText:'Ngati nsomba zikukamwa mpweya pamwamba — ICI NI VUTO LA MPWEYA',
+    gaspingSteps:['Siyani kudyetsa nthawi yomweyo','Yatsani zipangizo zonse za mpweya pa liwiro lakwambitsitsa','Yitanani mwini lero lero','Musachotseko pa dzinje'],
+    weighDay:'⚖️ TSIKU LA KUYESA — Yesani nsomba 10 lero',weighInstructions:'Yesani nsomba 10 zachisawawa kuzungulira dzinje. Lemba chiwerengero cha pakatikati mu app.',
+    validUntil:'Imatha pa', expiredMsg:'Uloleso wathera. Pemphani mwini kuti apange card yatsopano.',
+    phase:'Gawo la Kukula', weekNum:'Sabata', print:'Sindikizani Kadi iyi',
+    today:'Lero', noTokenMsg:'Palibe token ya worker card mu URL.',
+    langLabel:'Chiyankhulo',
+  }
+};
+
+function t(key) { return T[currentLang]?.[key] || T.en[key] || key; }
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('pm_worker_lang', lang);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  renderCard(window._cardData);
+}
+
+// ============================================================
+// FETCH POND DATA — single minimal fetch, no SDK
+// ============================================================
+async function loadCard() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+
+  if (!token) {
+    showError(t('noTokenMsg'));
+    return;
+  }
+
+  // Read config for Supabase URL/key
+  const SUPABASE_URL = (typeof CONFIG !== 'undefined' && CONFIG.SUPABASE_URL) || '';
+  const ANON_KEY = (typeof CONFIG !== 'undefined' && CONFIG.SUPABASE_ANON_KEY) || '';
+
+  if (!SUPABASE_URL) {
+    showError('Configuration error — contact farm owner.');
+    return;
+  }
+
+  try {
+    // Single minimal fetch: pond + active lot
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/pm_ponds?worker_token=eq.${encodeURIComponent(token)}&select=id,pond_name,pond_number,length_m,width_m,depth_m,volume_m3,worker_token_expires_at,user_id`, {
+      headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` }
+    });
+    const ponds = await res.json();
+
+    if (!ponds || !ponds.length) {
+      showError(t('expiredMsg'));
+      return;
+    }
+
+    const pond = ponds[0];
+
+    // Check expiry
+    if (pond.worker_token_expires_at && new Date(pond.worker_token_expires_at) < new Date()) {
+      showError(t('expiredMsg'));
+      return;
+    }
+
+    // Fetch active lot
+    const lotRes = await fetch(`${SUPABASE_URL}/rest/v1/pm_pond_lots?pond_id=eq.${pond.id}&status=eq.active&select=id,species,fingerlings_stocked,stocking_date,harvest_month_target&limit=1`, {
+      headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` }
+    });
+    const lots = await lotRes.json();
+    const lot = lots?.[0] || null;
+
+    // Fetch farm owner emergency contact
+    const ownerRes = await fetch(`${SUPABASE_URL}/rest/v1/pm_users?id=eq.${pond.user_id}&select=name,farm_name`, {
+      headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` }
+    });
+    const owners = await ownerRes.json();
+    const owner = owners?.[0] || null;
+
+    window._cardData = { pond, lot, owner, token, expires: pond.worker_token_expires_at };
+    renderCard(window._cardData);
+
+  } catch (err) {
+    showError('Could not load worker card. Check your internet connection.');
+  }
+}
+
+function showError(msg) {
+  document.getElementById('card-title').textContent = 'PondMaster';
+  document.getElementById('card-subtitle').textContent = 'Worker Card';
+  document.getElementById('main-content').innerHTML = `
+    <div class="error-state">
+      <h2>⚠️ Card Unavailable</h2>
+      <p>${msg}</p>
+    </div>`;
+}
+
+function renderCard(data) {
+  if (!data) return;
+  const { pond, lot, owner, expires } = data;
+
+  // Header
+  document.getElementById('card-title').textContent = `${owner?.farm_name || 'Farm'} — ${pond.pond_name}`;
+  document.getElementById('card-subtitle').textContent = `${t('today')}: ${TODAY_DISPLAY}`;
+
+  // Calculate feed
+  let feed = null;
+  let phase = null;
+  let weeksIn = 0;
+  let isWeighDay = false;
+
+  if (lot && lot.stocking_date) {
+    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+    weeksIn = Math.floor((Date.now() - new Date(lot.stocking_date)) / msPerWeek);
+
+    // Growth phase lookup (inline — no external growth.js dependency)
+    const PHASES = [
+      {weekEnd:4, feedType:'Starter Crumbles', rate:5, meals:3, phase:'NURSERY'},
+      {weekEnd:8, feedType:'Juvenile 1', rate:4, meals:3, phase:'JUVENILE'},
+      {weekEnd:16, feedType:'Juvenile 2 / Grower Pellets', rate:3, meals:2, phase:'GROWER'},
+      {weekEnd:24, feedType:'Grower Pellets', rate:2, meals:2, phase:'PRE-HARVEST'},
+      {weekEnd:99, feedType:'Grower Pellets', rate:1.5, meals:1, phase:'FINISHING'},
+    ];
+    phase = PHASES.find(p => weeksIn < p.weekEnd) || PHASES[PHASES.length-1];
+
+    // Rough weight estimate (linear between milestones)
+    const CURVE = [{w:0,g:5},{w:4,g:50},{w:8,g:120},{w:12,g:220},{w:16,g:350},{w:20,g:480},{w:24,g:600},{w:28,g:700}];
+    let estG = 700;
+    for (let i = 0; i < CURVE.length-1; i++) {
+      if (weeksIn >= CURVE[i].w && weeksIn <= CURVE[i+1].w) {
+        const t2 = (weeksIn - CURVE[i].w) / (CURVE[i+1].w - CURVE[i].w);
+        estG = CURVE[i].g + t2 * (CURVE[i+1].g - CURVE[i].g);
+        break;
+      }
+    }
+
+    const alive = lot.fingerlings_stocked || 10800;
+    const biomass = (estG * alive) / 1000;
+    const totalFeed = +(biomass * phase.rate / 100).toFixed(1);
+    const halfFeed = +(totalFeed / 2).toFixed(1);
+
+    feed = {
+      totalKg: totalFeed,
+      morningKg: phase.meals >= 2 ? halfFeed : totalFeed,
+      eveningKg: phase.meals >= 2 ? halfFeed : 0,
+      feedType: phase.feedType,
+      meals: phase.meals,
+      estWeight: Math.round(estG),
+    };
+
+    // Weigh day = every 7 days from stocking
+    const daysSinceStocking = Math.floor((Date.now() - new Date(lot.stocking_date)) / 86400000);
+    isWeighDay = daysSinceStocking % 7 === 0;
+  }
+
+  // Build HTML
+  let html = `
+    <div class="lang-toggle">
+      <button class="lang-btn ${currentLang==='en'?'active':''}" data-lang="en" onclick="setLang('en')">English</button>
+      <button class="lang-btn ${currentLang==='ny'?'active':''}" data-lang="ny" onclick="setLang('ny')">Chichewa</button>
+    </div>
+
+    ${isWeighDay ? `<div class="weigh-reminder">
+      <div style="font-weight:700;font-size:16px;margin-bottom:6px">${t('weighDay')}</div>
+      <div style="font-size:15px">${t('weighInstructions')}</div>
+    </div>` : ''}
+
+    <div class="card">
+      <div class="section-title" style="margin-bottom:12px">
+        ${phase ? `<span class="phase-badge">${t('phase')}: ${phase.phase} — ${t('weekNum')} ${weeksIn}</span>` : ''}
+      </div>`;
+
+  if (feed) {
+    if (feed.meals === 1) {
+      html += `<div class="feed-row">
+        <div class="feed-time">${t('morning')}</div>
+        <div><div class="feed-amount">${feed.morningKg} kg</div>
+        <div class="feed-type">${feed.feedType}</div>
+        <div style="font-size:13px;color:#555;margin-top:2px">${t('spreadEvenly')}</div></div>
+      </div>
+      <div style="text-align:center;font-style:italic;color:#888;font-size:14px;padding:4px">${t('singleMeal')}</div>`;
+    } else {
+      html += `<div class="feed-row">
+        <div class="feed-time">${t('morning')}</div>
+        <div><div class="feed-amount">${feed.morningKg} kg</div>
+        <div class="feed-type">${feed.feedType}</div>
+        <div style="font-size:13px;color:#555;margin-top:2px">${t('spreadEvenly')}</div></div>
+      </div>
+      <div class="feed-row">
+        <div class="feed-time">${t('evening')}</div>
+        <div><div class="feed-amount">${feed.eveningKg} kg</div>
+        <div class="feed-type">${feed.feedType}</div>
+        <div style="font-size:13px;color:#555;margin-top:2px">${t('spreadEvenly')}</div></div>
+      </div>`;
+    }
+    html += `<div style="font-size:13px;color:#555;padding:8px 0;text-align:center">Total: ${feed.totalKg} kg · Est. fish weight: ${feed.estWeight}g</div>`;
+  }
+
+  html += `</div>
+
+    <div class="card">
+      <div class="section-title">${t('watchFor')}</div>
+      <div>${T[currentLang].checkList.map(item => `
+        <div class="checklist-item"><div class="check-box"></div><div>${item}</div></div>`).join('')}
+      </div>
+    </div>
+
+    <div class="emergency">
+      <div class="emergency-title">${t('emergency')}</div>
+      <div class="emergency-text" style="margin-bottom:10px">${t('gaspingText')}</div>
+      ${T[currentLang].gaspingSteps.map((s,i) => `<div style="padding:4px 0;font-size:16px"><strong>${i+1}.</strong> ${s}</div>`).join('')}
+    </div>
+
+    <button class="print-btn" onclick="window.print()">🖨️ ${t('print')}</button>
+
+    <div class="footer">
+      <div>PondMaster · ${t('validUntil')}: ${expires ? new Date(expires).toLocaleDateString('en-GB') : '—'}</div>
+      <div style="margin-top:4px">Powered by PondMaster — pondmaster.app</div>
+    </div>`;
+
+  document.getElementById('main-content').innerHTML = html;
+}
+
+// Load config then fetch card
+(function() {
+  const script = document.createElement('script');
+  script.src = 'config.js';
+  script.onload = loadCard;
+  script.onerror = loadCard; // try anyway (demo mode)
+  document.head.appendChild(script);
+})();
+</script>
+</body>
+</html>

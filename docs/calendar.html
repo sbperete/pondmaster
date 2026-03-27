@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Calendar — PondMaster</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1A5276">
+</head>
+<body>
+<div class="offline-bar">No internet — working offline</div>
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div style="padding:20px 16px;display:flex;align-items:center;gap:10px">
+      <svg width="32" height="32" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#1A5276"/><ellipse cx="50" cy="48" rx="28" ry="14" fill="white"/><polygon points="22,48 8,36 8,60" fill="white"/></svg>
+      <span style="font-weight:700;font-size:16px;color:var(--text-nav)">PondMaster</span>
+    </div>
+    <nav><ul class="sidebar-nav">
+      <li><a href="dashboard.html">🏠 Dashboard</a></li>
+      <li><a href="calendar.html" class="active">📅 Calendar</a></li>
+      <li><a href="reports.html">📊 Reports</a></li>
+      <li><a href="settings.html">⚙️ Settings</a></li>
+      <li><a href="#" onclick="window.PondAuth?.signOut()">↩ Sign Out</a></li>
+    </ul></nav>
+  </aside>
+
+  <div class="main-content">
+    <div class="top-bar">
+      <button onclick="document.getElementById('sidebar').classList.toggle('open')" style="background:none;border:none;font-size:20px;cursor:pointer;margin-right:12px;display:none" class="hamburger-btn">☰</button>
+      <button id="btn-prev-month" onclick="changeMonth(-1)" style="background:none;border:none;font-size:20px;cursor:pointer;padding:0 8px">‹</button>
+      <span id="month-label" style="font-weight:700;font-size:17px;min-width:180px;text-align:center"></span>
+      <button id="btn-next-month" onclick="changeMonth(1)" style="background:none;border:none;font-size:20px;cursor:pointer;padding:0 8px">›</button>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <button onclick="goToToday()" style="height:32px;padding:0 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-primary);font-size:13px;cursor:pointer">Today</button>
+        <button class="theme-toggle" style="background:none;border:1px solid var(--border);border-radius:20px;padding:6px 12px;cursor:pointer;font-size:14px">🌙</button>
+      </div>
+    </div>
+
+    <div style="padding:16px">
+      <!-- Legend -->
+      <div id="pond-legend" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;font-size:13px"></div>
+
+      <!-- Calendar grid -->
+      <div style="background:var(--bg-card);border-radius:12px;border:1px solid var(--border);overflow:hidden">
+        <!-- Day headers -->
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border)">
+          <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted)">Sun</div>
+          <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted)">Mon</div>
+          <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted)">Tue</div>
+          <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted)">Wed</div>
+          <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted)">Thu</div>
+          <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted)">Fri</div>
+          <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted)">Sat</div>
+        </div>
+        <div id="calendar-grid" style="display:grid;grid-template-columns:repeat(7,1fr)"></div>
+      </div>
+
+      <!-- Upcoming events list -->
+      <h3 style="font-size:15px;font-weight:700;margin:20px 0 10px">Upcoming Events</h3>
+      <div id="upcoming-events"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom nav -->
+<nav class="bottom-nav">
+  <a href="dashboard.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;text-decoration:none;color:var(--text-muted);font-size:11px"><span style="font-size:20px">🏠</span>Home</a>
+  <a href="dashboard.html#ponds" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;text-decoration:none;color:var(--text-muted);font-size:11px"><span style="font-size:20px">🐟</span>Ponds</a>
+  <a href="calendar.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;text-decoration:none;color:var(--accent-blue);font-size:11px"><span style="font-size:20px">📅</span>Calendar</a>
+  <a href="pond.html?tab=chat" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;text-decoration:none;color:var(--text-muted);font-size:11px"><span style="font-size:20px">🤖</span>Chat</a>
+  <a href="settings.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;text-decoration:none;color:var(--text-muted);font-size:11px"><span style="font-size:20px">⚙️</span>Settings</a>
+</nav>
+
+<!-- Event detail bottom sheet -->
+<div class="modal-overlay" id="modal-event">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div id="event-detail-content"></div>
+    <button onclick="window.PondApp?.closeModal('modal-event')" class="btn btn-secondary btn-full" style="margin-top:16px">Close</button>
+  </div>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="config.js" defer></script>
+<script src="js/theme.js" defer></script>
+<script src="js/supabase.js" defer></script>
+<script src="js/app.js" defer></script>
+<script src="js/growth.js" defer></script>
+<script>
+// Supabase CDN must be loaded before supabase.js
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+<script>
+const POND_COLORS = ['#58A6FF','#3FB950','#F0883E','#D29922','#BC8CFF','#FF7B72'];
+let currentYear, currentMonth, allEvents = [];
+
+function changeMonth(delta) {
+  currentMonth += delta;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  renderCalendar();
+}
+
+function goToToday() {
+  const now = new Date();
+  currentYear = now.getFullYear();
+  currentMonth = now.getMonth();
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('month-label').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const today = new Date().toISOString().split('T')[0];
+
+  const grid = document.getElementById('calendar-grid');
+  let html = '';
+
+  // Blank cells for offset
+  for (let i = 0; i < firstDay; i++) {
+    html += '<div style="min-height:70px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)"></div>';
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = dateStr === today;
+    const dayEvents = allEvents.filter(e => e.date === dateStr);
+
+    html += `<div onclick="showDayEvents('${dateStr}')" style="min-height:70px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px;cursor:pointer;${isToday ? 'background:rgba(88,166,255,0.08)' : ''}">
+      <div style="font-size:13px;font-weight:${isToday ? '700' : '400'};color:${isToday ? 'var(--accent-blue)' : 'var(--text-primary)'};margin-bottom:4px">${d}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px">
+        ${dayEvents.slice(0,3).map(ev => `<span style="display:block;width:8px;height:8px;border-radius:50%;background:${ev.color}" title="${ev.label}"></span>`).join('')}
+        ${dayEvents.length > 3 ? `<span style="font-size:10px;color:var(--text-muted)">+${dayEvents.length-3}</span>` : ''}
+      </div>
+    </div>`;
+  }
+
+  grid.innerHTML = html;
+  renderUpcoming();
+}
+
+function showDayEvents(dateStr) {
+  const dayEvents = allEvents.filter(e => e.date === dateStr);
+  if (!dayEvents.length) return;
+  const d = new Date(dateStr + 'T12:00:00');
+  const formatted = d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  document.getElementById('event-detail-content').innerHTML = `
+    <h3 style="font-weight:700;margin-bottom:12px">${formatted}</h3>
+    ${dayEvents.map(ev => `
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+        <span style="display:block;width:10px;height:10px;border-radius:50%;background:${ev.color};margin-top:4px;flex-shrink:0"></span>
+        <div>
+          <div style="font-weight:600;font-size:14px">${ev.label}</div>
+          <div style="font-size:13px;color:var(--text-secondary)">${ev.pondName}</div>
+          ${ev.note ? `<div style="font-size:12px;color:var(--text-muted);margin-top:2px">${ev.note}</div>` : ''}
+        </div>
+        ${ev.pondId ? `<a href="pond.html?id=${ev.pondId}" style="margin-left:auto;font-size:12px;color:var(--accent-blue)">View →</a>` : ''}
+      </div>`).join('')}`;
+  window.PondApp?.openModal('modal-event');
+}
+
+function renderUpcoming() {
+  const today = new Date().toISOString().split('T')[0];
+  const upcoming = allEvents.filter(e => e.date >= today).sort((a,b) => a.date.localeCompare(b.date)).slice(0,10);
+  const container = document.getElementById('upcoming-events');
+  if (!upcoming.length) { container.innerHTML = '<p class="text-muted">No upcoming events</p>'; return; }
+  container.innerHTML = upcoming.map(ev => {
+    const d = new Date(ev.date + 'T12:00:00');
+    const label = d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+    return `<div class="card" style="display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer" onclick="showDayEvents('${ev.date}')">
+      <span style="display:block;width:10px;height:10px;border-radius:50%;background:${ev.color};flex-shrink:0"></span>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:600">${ev.label}</div>
+        <div style="font-size:12px;color:var(--text-muted)">${ev.pondName}</div>
+      </div>
+      <div style="font-size:13px;color:var(--text-secondary)">${label}</div>
+    </div>`;
+  }).join('');
+}
+
+function generateEvents(ponds, lotsMap) {
+  const events = [];
+  ponds.forEach((pond, idx) => {
+    const color = POND_COLORS[idx % POND_COLORS.length];
+    const lot = lotsMap[pond.id]?.[0];
+    if (!lot || !lot.stocking_date) return;
+
+    const stocking = new Date(lot.stocking_date);
+    const months = lot.harvest_month_target || 6;
+
+    // Harvest date
+    const harvestDate = new Date(stocking);
+    harvestDate.setMonth(harvestDate.getMonth() + months);
+    events.push({ date: harvestDate.toISOString().split('T')[0], label: `🎣 Harvest: ${pond.pond_name}`, color, pondName: pond.pond_name, pondId: pond.id, note: `Month ${months} target` });
+
+    // Weekly weigh days (every 7 days)
+    for (let w = 7; w <= months * 30; w += 7) {
+      const weighDate = new Date(stocking.getTime() + w * 86400000);
+      events.push({ date: weighDate.toISOString().split('T')[0], label: `⚖️ Weigh 10 fish`, color, pondName: pond.pond_name, pondId: pond.id });
+    }
+
+    // Water change reminders (every 14 days)
+    for (let d = 14; d <= months * 30; d += 14) {
+      const changeDate = new Date(stocking.getTime() + d * 86400000);
+      events.push({ date: changeDate.toISOString().split('T')[0], label: `💧 Water change`, color, pondName: pond.pond_name, pondId: pond.id });
+    }
+
+    // Phase transitions
+    const phases = [{ week:4, label:'→ Juvenile feed' }, { week:8, label:'→ Grower pellets' }, { week:16, label:'→ Pre-harvest feed' }, { week:24, label:'→ Finishing phase' }];
+    phases.forEach(p => {
+      const phaseDate = new Date(stocking.getTime() + p.week * 7 * 86400000);
+      events.push({ date: phaseDate.toISOString().split('T')[0], label: `🔄 ${p.label}`, color, pondName: pond.pond_name, pondId: pond.id });
+    });
+  });
+  return events;
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+  const now = new Date();
+  currentYear = now.getFullYear();
+  currentMonth = now.getMonth();
+
+  const { data: { user } } = await (window.supabaseClient?.auth.getUser() || Promise.resolve({ data: {} }));
+  if (!user) { window.location.href = 'auth.html'; return; }
+
+  try {
+    const ponds = await window.PondDB.getPonds(user.id);
+    const lotsMap = {};
+    await Promise.all(ponds.map(async p => {
+      lotsMap[p.id] = await window.PondDB.getLots(p.id);
+    }));
+    allEvents = generateEvents(ponds, lotsMap);
+
+    // Legend
+    const legend = document.getElementById('pond-legend');
+    if (legend) {
+      legend.innerHTML = ponds.map((p, i) =>
+        `<span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:${POND_COLORS[i % POND_COLORS.length]};display:inline-block"></span>${p.pond_name}</span>`
+      ).join('');
+    }
+  } catch(e) { /* demo or offline */ }
+
+  renderCalendar();
+});
+</script>
+</body>
+</html>

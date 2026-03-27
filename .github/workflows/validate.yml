@@ -1,0 +1,103 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check required files exist
+        run: |
+          MISSING=0
+          FILES=(
+            "docs/index.html"
+            "docs/auth.html"
+            "docs/dashboard.html"
+            "docs/pond.html"
+            "docs/calendar.html"
+            "docs/reports.html"
+            "docs/settings.html"
+            "docs/demo.html"
+            "docs/worker-card.html"
+            "docs/share-target.html"
+            "docs/offline.html"
+            "docs/404.html"
+            "docs/privacy.html"
+            "docs/manifest.json"
+            "docs/sw.js"
+            "docs/css/style.css"
+            "docs/js/app.js"
+            "docs/js/supabase.js"
+            "docs/js/theme.js"
+            "docs/js/growth.js"
+            "docs/js/ai-chat.js"
+            "docs/js/charts.js"
+            "docs/js/pwa.js"
+            "docs/js/tour.js"
+            "docs/js/demo-data.js"
+            "docs/icons/icon-192.png"
+            "docs/icons/icon-512.png"
+          )
+          for f in "${FILES[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "MISSING: $f"
+              MISSING=1
+            else
+              echo "OK: $f"
+            fi
+          done
+          exit $MISSING
+
+      - name: Validate manifest.json
+        run: |
+          node -e "
+            const fs = require('fs');
+            const m = JSON.parse(fs.readFileSync('docs/manifest.json','utf8'));
+            const required = ['name','short_name','start_url','display','icons'];
+            required.forEach(k => {
+              if (!m[k]) throw new Error('manifest.json missing: ' + k);
+              console.log('OK: manifest.' + k + ' =', JSON.stringify(m[k]).slice(0,60));
+            });
+            const has192 = m.icons.some(i => i.sizes === '192x192');
+            const has512 = m.icons.some(i => i.sizes === '512x512');
+            if (!has192) throw new Error('manifest.json missing 192x192 icon');
+            if (!has512) throw new Error('manifest.json missing 512x512 icon');
+            console.log('OK: manifest icons include 192x192 and 512x512');
+          "
+
+      - name: Check service worker references offline page
+        run: |
+          grep -q "offline.html" docs/sw.js && echo "OK: sw.js references offline.html" || \
+            (echo "WARN: sw.js may not reference offline.html" && true)
+
+      - name: Check no hardcoded Supabase keys in HTML/JS
+        run: |
+          # config.js is gitignored — keys should only appear there
+          FOUND=0
+          for f in docs/**/*.html docs/js/*.js; do
+            if grep -l "sb_publishable\|eyJhbGci" "$f" 2>/dev/null; then
+              echo "WARNING: possible key in $f"
+              FOUND=1
+            fi
+          done
+          if [ $FOUND -eq 0 ]; then echo "OK: no hardcoded keys in HTML/JS"; fi
+          exit 0
+
+      - name: Check HTML files have viewport meta
+        run: |
+          MISSING=0
+          for f in docs/*.html; do
+            if ! grep -q 'viewport' "$f"; then
+              echo "MISSING viewport meta: $f"
+              MISSING=1
+            fi
+          done
+          [ $MISSING -eq 0 ] && echo "OK: all HTML files have viewport meta"
+          exit $MISSING

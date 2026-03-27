@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Settings — PondMaster</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1A5276">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+</head>
+<body>
+<div class="offline-bar">No internet — working offline</div>
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div style="padding:20px 16px;display:flex;align-items:center;gap:10px">
+      <svg width="32" height="32" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#1A5276"/><ellipse cx="50" cy="48" rx="28" ry="14" fill="white"/><polygon points="22,48 8,36 8,60" fill="white"/></svg>
+      <span style="font-weight:700;font-size:16px;color:var(--text-nav)">PondMaster</span>
+    </div>
+    <nav><ul class="sidebar-nav">
+      <li><a href="dashboard.html">🏠 Dashboard</a></li>
+      <li><a href="calendar.html">📅 Calendar</a></li>
+      <li><a href="reports.html">📊 Reports</a></li>
+      <li><a href="settings.html" class="active">⚙️ Settings</a></li>
+      <li><a href="#" onclick="window.PondAuth?.signOut()">↩ Sign Out</a></li>
+    </ul></nav>
+  </aside>
+
+  <div class="main-content">
+    <div class="top-bar">
+      <button onclick="document.getElementById('sidebar').classList.toggle('open')" style="background:none;border:none;font-size:20px;cursor:pointer;margin-right:12px">☰</button>
+      <span style="font-weight:700;font-size:17px">Settings</span>
+      <div style="margin-left:auto">
+        <button class="theme-toggle" style="background:none;border:1px solid var(--border);border-radius:20px;padding:6px 12px;cursor:pointer;font-size:14px">🌙</button>
+      </div>
+    </div>
+
+    <div style="padding:16px;max-width:600px">
+
+      <!-- Profile -->
+      <div class="card" style="margin-bottom:16px">
+        <h2 style="font-size:15px;font-weight:700;margin-bottom:16px">👤 Profile</h2>
+        <form id="form-profile">
+          <div class="form-group">
+            <label>Your Name</label>
+            <input type="text" name="name" id="profile-name" placeholder="John Banda">
+          </div>
+          <div class="form-group">
+            <label>Farm Name</label>
+            <input type="text" name="farm_name" id="profile-farm" placeholder="Mbwadzulu Fish Farm">
+          </div>
+          <div class="form-group">
+            <label>Location</label>
+            <input type="text" name="location" id="profile-location" placeholder="Lilongwe, Malawi">
+          </div>
+          <button type="submit" class="btn btn-primary">Save Profile</button>
+        </form>
+      </div>
+
+      <!-- Theme -->
+      <div class="card" style="margin-bottom:16px">
+        <h2 style="font-size:15px;font-weight:700;margin-bottom:12px">🎨 Theme</h2>
+        <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content">
+          <button onclick="setThemePref('light')" id="theme-light" class="theme-pref-btn" style="padding:10px 20px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s">☀️ Light</button>
+          <button onclick="setThemePref('dark')" id="theme-dark" class="theme-pref-btn" style="padding:10px 20px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s">🌙 Dark</button>
+          <button onclick="setThemePref('system')" id="theme-system" class="theme-pref-btn" style="padding:10px 20px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s">💻 System</button>
+        </div>
+      </div>
+
+      <!-- Language -->
+      <div class="card" style="margin-bottom:16px">
+        <h2 style="font-size:15px;font-weight:700;margin-bottom:12px">🌍 Language</h2>
+        <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content">
+          <button onclick="setLang('en')" id="lang-en" style="padding:10px 20px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s">🇬🇧 English</button>
+          <button onclick="setLang('ny')" id="lang-ny" style="padding:10px 20px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s">🇲🇼 Chichewa</button>
+        </div>
+        <p style="font-size:13px;color:var(--text-muted);margin-top:8px">Worker cards are always bilingual. This sets the app language.</p>
+      </div>
+
+      <!-- Currency -->
+      <div class="card" style="margin-bottom:16px">
+        <h2 style="font-size:15px;font-weight:700;margin-bottom:12px">💰 Currency</h2>
+        <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content">
+          <button onclick="setCurrency('MWK')" id="curr-MWK" style="padding:10px 20px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s">MWK</button>
+          <button onclick="setCurrency('USD')" id="curr-USD" style="padding:10px 20px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s">USD</button>
+          <button onclick="setCurrency('ZMW')" id="curr-ZMW" style="padding:10px 20px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s">ZMW</button>
+        </div>
+      </div>
+
+      <!-- Data sync -->
+      <div class="card" style="margin-bottom:16px">
+        <h2 style="font-size:15px;font-weight:700;margin-bottom:12px">🔄 Data Sync</h2>
+        <div style="font-size:14px;color:var(--text-secondary);margin-bottom:10px">Auto-sync interval:</div>
+        <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content;margin-bottom:12px">
+          <button onclick="setSyncInterval(15)" id="sync-15" style="padding:8px 16px;border:none;cursor:pointer;font-size:13px;transition:all 0.2s">15 min</button>
+          <button onclick="setSyncInterval(60)" id="sync-60" style="padding:8px 16px;border:none;cursor:pointer;font-size:13px;transition:all 0.2s">1 hour</button>
+          <button onclick="setSyncInterval(0)" id="sync-manual" style="padding:8px 16px;border:none;cursor:pointer;font-size:13px;transition:all 0.2s">Manual</button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--border)">
+          <div>
+            <div style="font-size:14px;font-weight:600">WiFi only sync</div>
+            <div style="font-size:12px;color:var(--text-muted)">Save mobile data</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px">
+            <input type="checkbox" id="wifi-only-toggle" style="opacity:0;width:0;height:0" onchange="localStorage.setItem('pm_wifi_only',this.checked)">
+            <span id="wifi-toggle-track" style="position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:24px;transition:0.2s"></span>
+          </label>
+        </div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:8px">Estimated data per sync: ~50KB</div>
+        <button onclick="window.PondDB?.processSyncQueue().then(()=>window.PondApp?.showToast('Synced!','success'))" class="btn btn-secondary" style="margin-top:10px;height:36px;font-size:13px">Sync Now</button>
+      </div>
+
+      <!-- AI Providers -->
+      <div class="card" style="margin-bottom:16px">
+        <h2 style="font-size:15px;font-weight:700;margin-bottom:4px">🤖 AI Advisor</h2>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Bring your own API key. Keys are stored encoded — never sent to PondMaster servers.</p>
+
+        <div id="ai-providers">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div class="card" style="margin-bottom:16px">
+        <h2 style="font-size:15px;font-weight:700;margin-bottom:12px">🔔 Notifications</h2>
+        <button id="btn-enable-notifs" onclick="enableNotifications()" class="btn btn-secondary" style="height:40px;font-size:14px">Enable Push Notifications</button>
+        <p style="font-size:13px;color:var(--text-muted);margin-top:8px" id="notif-status">Status: checking...</p>
+      </div>
+
+      <!-- Tour -->
+      <div class="card" style="margin-bottom:16px">
+        <h2 style="font-size:15px;font-weight:700;margin-bottom:8px">🗺️ Guided Tour</h2>
+        <p style="font-size:14px;color:var(--text-secondary);margin-bottom:12px">Restart the 11-step walkthrough anytime.</p>
+        <button onclick="restartTour()" class="btn btn-secondary btn-full" style="height:44px">Restart Guided Tour</button>
+      </div>
+
+      <!-- Data management -->
+      <div class="card" style="margin-bottom:16px">
+        <h2 style="font-size:15px;font-weight:700;margin-bottom:12px">💾 Data</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="font-size:14px">Cache storage</div>
+          <div id="cache-size" style="font-size:13px;color:var(--text-muted)">Calculating...</div>
+        </div>
+        <button onclick="clearCache()" class="btn btn-secondary" style="height:36px;font-size:13px">Clear Cache</button>
+      </div>
+
+      <!-- App info -->
+      <div class="card" style="margin-bottom:16px">
+        <h2 style="font-size:15px;font-weight:700;margin-bottom:8px">ℹ️ About</h2>
+        <div style="font-size:14px;color:var(--text-secondary);line-height:1.8">
+          <div>Version: <strong id="app-version">1.0.0</strong></div>
+          <div>Author: Steven Mwenye</div>
+          <div><a href="https://github.com/sbperete/pondmaster" target="_blank" style="color:var(--accent-blue)">GitHub Repository</a></div>
+          <div><a href="privacy.html" style="color:var(--accent-blue)">Privacy Policy</a></div>
+        </div>
+      </div>
+
+      <!-- Danger zone -->
+      <div class="card" style="margin-bottom:32px;border-color:var(--alert-red)">
+        <h2 style="font-size:15px;font-weight:700;margin-bottom:8px;color:var(--alert-red)">⚠️ Danger Zone</h2>
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">Permanently delete your account and all pond data. This cannot be undone.</p>
+        <button onclick="deleteAccount()" class="btn btn-danger" style="height:40px;font-size:14px">Delete Account</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Bottom nav -->
+<nav class="bottom-nav">
+  <a href="dashboard.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;text-decoration:none;color:var(--text-muted);font-size:11px"><span style="font-size:20px">🏠</span>Home</a>
+  <a href="dashboard.html#ponds" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;text-decoration:none;color:var(--text-muted);font-size:11px"><span style="font-size:20px">🐟</span>Ponds</a>
+  <a href="calendar.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;text-decoration:none;color:var(--text-muted);font-size:11px"><span style="font-size:20px">📅</span>Calendar</a>
+  <a href="pond.html?tab=chat" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;text-decoration:none;color:var(--text-muted);font-size:11px"><span style="font-size:20px">🤖</span>Chat</a>
+  <a href="settings.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;text-decoration:none;color:var(--accent-blue);font-size:11px"><span style="font-size:20px">⚙️</span>Settings</a>
+</nav>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="config.js" defer></script>
+<script src="js/theme.js" defer></script>
+<script src="js/supabase.js" defer></script>
+<script src="js/app.js" defer></script>
+<script src="js/tour.js" defer></script>
+<script src="js/pwa.js" defer></script>
+
+<script>
+const AI_PROVIDERS = [
+  { id: 'claude',   name: 'Claude',    icon: '🧠', model: 'claude-sonnet-4-20250514' },
+  { id: 'openai',   name: 'OpenAI',    icon: '🤖', model: 'gpt-4o-mini' },
+  { id: 'deepseek', name: 'DeepSeek',  icon: '🔍', model: 'deepseek-chat' },
+  { id: 'gemini',   name: 'Gemini',    icon: '✨', model: 'gemini-1.5-flash' },
+];
+
+document.addEventListener('DOMContentLoaded', async function() {
+  const { data: { user } } = await (window.supabaseClient?.auth.getUser() || Promise.resolve({ data: {} }));
+  if (!user) { window.location.href = 'auth.html'; return; }
+
+  // Load profile
+  try {
+    const profile = await window.PondDB?.getProfile(user.id);
+    if (profile) {
+      document.getElementById('profile-name').value = profile.name || '';
+      document.getElementById('profile-farm').value = profile.farm_name || '';
+      document.getElementById('profile-location').value = profile.location || '';
+    }
+  } catch(e) {}
+
+  // App version
+  if (typeof CONFIG !== 'undefined') document.getElementById('app-version').textContent = CONFIG.APP_VERSION || '1.0.0';
+
+  // Theme buttons
+  updateThemeButtons();
+  updateLangButtons();
+  updateCurrencyButtons();
+  updateSyncButtons();
+
+  // Cache size
+  estimateCacheSize();
+
+  // Notification status
+  updateNotifStatus();
+
+  // AI providers
+  renderAIProviders();
+
+  // WiFi only toggle
+  const wifiToggle = document.getElementById('wifi-only-toggle');
+  if (wifiToggle) wifiToggle.checked = localStorage.getItem('pm_wifi_only') === 'true';
+});
+
+document.getElementById('form-profile')?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const btn = this.querySelector('button');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    const { data: { user } } = await window.supabaseClient.auth.getUser();
+    await window.PondDB?.updateProfile(user.id, {
+      name: this.name.value.trim(),
+      farm_name: this.farm_name.value.trim(),
+      location: this.location.value.trim(),
+    });
+    window.PondApp?.showToast('Profile saved', 'success');
+  } catch(err) {
+    window.PondApp?.showToast('Failed to save: ' + err.message, 'error');
+  } finally { btn.disabled = false; btn.textContent = 'Save Profile'; }
+});
+
+function setThemePref(pref) {
+  window.PondTheme?.setTheme(pref);
+  updateThemeButtons();
+  // Sync to Supabase
+  window.supabaseClient?.auth.getUser().then(({ data }) => {
+    if (data?.user) window.PondDB?.updateProfile(data.user.id, { theme_preference: pref });
+  });
+}
+
+function updateThemeButtons() {
+  const current = window.PondTheme?.getSavedTheme() || 'system';
+  ['light','dark','system'].forEach(t => {
+    const btn = document.getElementById('theme-' + t);
+    if (btn) btn.style.cssText = `padding:10px 20px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s;background:${current===t?'var(--accent-blue)':'var(--bg-card)'};color:${current===t?'white':'var(--text-primary)'}`;
+  });
+}
+
+function setLang(lang) {
+  localStorage.setItem('pm_language', lang);
+  updateLangButtons();
+  window.PondApp?.showToast(`Language set to ${lang === 'en' ? 'English' : 'Chichewa'}`, 'success');
+}
+
+function updateLangButtons() {
+  const current = localStorage.getItem('pm_language') || 'en';
+  ['en','ny'].forEach(l => {
+    const btn = document.getElementById('lang-' + l);
+    if (btn) btn.style.cssText = `padding:10px 20px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s;background:${current===l?'var(--accent-blue)':'var(--bg-card)'};color:${current===l?'white':'var(--text-primary)'}`;
+  });
+}
+
+function setCurrency(curr) {
+  localStorage.setItem('pm_currency', curr);
+  updateCurrencyButtons();
+}
+
+function updateCurrencyButtons() {
+  const current = localStorage.getItem('pm_currency') || 'MWK';
+  ['MWK','USD','ZMW'].forEach(c => {
+    const btn = document.getElementById('curr-' + c);
+    if (btn) btn.style.cssText = `padding:10px 20px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s;background:${current===c?'var(--accent-blue)':'var(--bg-card)'};color:${current===c?'white':'var(--text-primary)'}`;
+  });
+}
+
+function setSyncInterval(mins) {
+  localStorage.setItem('pm_sync_interval', mins.toString());
+  updateSyncButtons();
+}
+
+function updateSyncButtons() {
+  const current = localStorage.getItem('pm_sync_interval') || '15';
+  const map = { '15': 'sync-15', '60': 'sync-60', '0': 'sync-manual' };
+  Object.entries(map).forEach(([val, id]) => {
+    const btn = document.getElementById(id);
+    if (btn) btn.style.cssText = `padding:8px 16px;border:none;cursor:pointer;font-size:13px;transition:all 0.2s;background:${current===val?'var(--accent-blue)':'var(--bg-card)'};color:${current===val?'white':'var(--text-primary)'}`;
+  });
+}
+
+function renderAIProviders() {
+  const container = document.getElementById('ai-providers');
+  if (!container) return;
+  container.innerHTML = AI_PROVIDERS.map(p => {
+    const hasKey = !!localStorage.getItem(`pm_ai_key_${p.id}`);
+    return `<div style="border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-weight:700;font-size:15px">${p.icon} ${p.name}</div>
+        <span style="font-size:12px;padding:3px 10px;border-radius:20px;background:${hasKey?'rgba(63,185,80,0.15)':'var(--bg-secondary)'};color:${hasKey?'var(--accent-green)':'var(--text-muted)'}">${hasKey?'✓ Key set':'No key'}</span>
+      </div>
+      <div style="position:relative;display:flex;gap:8px">
+        <input type="password" id="key-${p.id}" placeholder="Paste your ${p.name} API key" style="flex:1;height:40px;padding:0 40px 0 12px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:6px;color:var(--text-primary);font-size:14px">
+        <button onclick="toggleKeyVisibility('${p.id}')" style="position:absolute;right:86px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-muted)">👁</button>
+        <button onclick="saveKey('${p.id}')" style="height:40px;padding:0 12px;background:var(--accent-green);color:white;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">Save</button>
+        <button onclick="testKey('${p.id}')" style="height:40px;padding:0 12px;background:transparent;border:1px solid var(--border);color:var(--text-primary);border-radius:6px;font-size:13px;cursor:pointer">Test</button>
+      </div>
+      <div id="test-result-${p.id}" style="font-size:12px;margin-top:6px;min-height:16px"></div>
+    </div>`;
+  }).join('');
+}
+
+function toggleKeyVisibility(provider) {
+  const input = document.getElementById('key-' + provider);
+  if (input) input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function saveKey(provider) {
+  const input = document.getElementById('key-' + provider);
+  if (!input?.value.trim()) { window.PondApp?.showToast('Enter an API key first', 'warning'); return; }
+  window.PondAI?.storeApiKey(provider, input.value.trim());
+  input.value = '';
+  window.PondApp?.showToast(`${provider} API key saved`, 'success');
+  renderAIProviders();
+}
+
+async function testKey(provider) {
+  const input = document.getElementById('key-' + provider);
+  const resultEl = document.getElementById('test-result-' + provider);
+  const rawKey = input?.value.trim() || window.PondAI?._getApiKey();
+  if (!rawKey) { if (resultEl) resultEl.innerHTML = '<span style="color:var(--alert-yellow)">Enter a key to test</span>'; return; }
+  if (resultEl) resultEl.innerHTML = '<span style="color:var(--text-muted)">Testing...</span>';
+  try {
+    const result = await window.PondAI?.testConnection(provider, rawKey);
+    if (resultEl) resultEl.innerHTML = result?.success
+      ? '<span style="color:var(--accent-green)">✓ Connection successful</span>'
+      : `<span style="color:var(--alert-red)">✗ ${result?.error || 'Failed'}</span>`;
+  } catch(e) {
+    if (resultEl) resultEl.innerHTML = `<span style="color:var(--alert-red)">✗ ${e.message}</span>`;
+  }
+}
+
+async function enableNotifications() {
+  const granted = await window.PondPWA?.requestPushPermission();
+  updateNotifStatus();
+}
+
+function updateNotifStatus() {
+  const statusEl = document.getElementById('notif-status');
+  if (!statusEl) return;
+  const status = window.PondPWA?.getPushPermissionStatus() || 'unsupported';
+  const labels = { granted: '✓ Enabled', denied: '✗ Blocked (change in browser settings)', default: 'Not yet requested', unsupported: 'Not supported on this browser' };
+  statusEl.textContent = 'Status: ' + (labels[status] || status);
+}
+
+function restartTour() {
+  localStorage.removeItem('pondmaster_tour_complete');
+  localStorage.removeItem('pondmaster_tour_step');
+  window.location.href = 'dashboard.html?tour=true';
+}
+
+function clearCache() {
+  const keys = Object.keys(localStorage).filter(k => k.startsWith('pm_') && (k.endsWith('_ts') || k.includes('pond') || k.includes('log')));
+  keys.forEach(k => localStorage.removeItem(k));
+  window.PondApp?.showToast('Cache cleared', 'success');
+  estimateCacheSize();
+}
+
+function estimateCacheSize() {
+  const el = document.getElementById('cache-size');
+  if (!el) return;
+  let size = 0;
+  Object.keys(localStorage).filter(k => k.startsWith('pm_')).forEach(k => {
+    size += (localStorage.getItem(k) || '').length * 2; // UTF-16
+  });
+  el.textContent = size < 1024 ? size + ' B' : size < 1048576 ? (size/1024).toFixed(1) + ' KB' : (size/1048576).toFixed(1) + ' MB';
+}
+
+async function deleteAccount() {
+  if (!confirm('This will permanently delete your account and ALL your pond data. This cannot be undone.\n\nType DELETE to confirm:') ) return;
+  const confirm2 = prompt('Type DELETE to confirm account deletion:');
+  if (confirm2 !== 'DELETE') { window.PondApp?.showToast('Deletion cancelled', 'warning'); return; }
+  try {
+    // Clear localStorage
+    Object.keys(localStorage).filter(k => k.startsWith('pm_')).forEach(k => localStorage.removeItem(k));
+    await window.supabaseClient?.auth.signOut();
+    window.location.href = 'index.html';
+  } catch(e) {
+    window.PondApp?.showToast('Error: ' + e.message, 'error');
+  }
+}
+</script>
+</body>
+</html>

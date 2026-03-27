@@ -1,0 +1,106 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      notes:
+        description: 'Release notes'
+        required: false
+        default: ''
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get current version
+        id: current
+        run: |
+          CURRENT=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0")
+          echo "version=$CURRENT" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT"
+
+      - name: Bump version
+        id: bump
+        run: |
+          CURRENT="${{ steps.current.outputs.version }}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+          case "${{ inputs.bump }}" in
+            major) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR+1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH+1)) ;;
+          esac
+          NEW="$MAJOR.$MINOR.$PATCH"
+          echo "new_version=$NEW" >> $GITHUB_OUTPUT
+          echo "New version: $NEW"
+
+          # Update package.json
+          node -e "
+            const fs = require('fs');
+            const p = JSON.parse(fs.readFileSync('package.json','utf8'));
+            p.version = '$NEW';
+            fs.writeFileSync('package.json', JSON.stringify(p, null, 2) + '\n');
+          "
+
+          # Update manifest.json version if present
+          if [ -f "docs/manifest.json" ]; then
+            node -e "
+              const fs = require('fs');
+              const m = JSON.parse(fs.readFileSync('docs/manifest.json','utf8'));
+              m.version = '$NEW';
+              fs.writeFileSync('docs/manifest.json', JSON.stringify(m, null, 2));
+            " 2>/dev/null || true
+          fi
+
+      - name: Commit version bump
+        run: |
+          git add package.json docs/manifest.json
+          git commit -m "chore: bump version to v${{ steps.bump.outputs.new_version }}" || true
+
+      - name: Create and push tag
+        run: |
+          git tag -a "v${{ steps.bump.outputs.new_version }}" \
+            -m "Release v${{ steps.bump.outputs.new_version }}${{ inputs.notes && format('\n\n{0}', inputs.notes) || '' }}"
+          git push origin main --follow-tags
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.bump.outputs.new_version }}
+          release_name: PondMaster v${{ steps.bump.outputs.new_version }}
+          body: |
+            ## PondMaster v${{ steps.bump.outputs.new_version }}
+
+            ${{ inputs.notes || 'See commit history for changes.' }}
+
+            ### Distribution
+            - **GitHub Pages**: https://sbperete.github.io/pondmaster/
+            - **Cloudflare Pages**: https://pondmaster.pages.dev
+
+            ### Build Android/Windows packages
+            Trigger `Build Android TWA` and `Build Windows MSIX` workflows manually from this tag.
+          draft: false
+          prerelease: false

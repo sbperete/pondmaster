@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="PondMaster — page not found" />
+  <title>404 Not Found — PondMaster</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --nav-bg: #1A5276;
+      --nav-text: #ffffff;
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text-primary: #e6edf3;
+      --text-secondary: #8b949e;
+      --accent: #2980B9;
+      --btn-primary-bg: #1A5276;
+      --btn-primary-hover: #1f6391;
+      --btn-secondary-bg: #21262d;
+      --btn-secondary-hover: #30363d;
+      --toggle-bg: #21262d;
+      --toggle-border: #30363d;
+    }
+
+    [data-theme="light"] {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --border: #d0d7de;
+      --text-primary: #1f2328;
+      --text-secondary: #656d76;
+      --btn-secondary-bg: #f6f8fa;
+      --btn-secondary-hover: #e8ecf0;
+      --toggle-bg: #f6f8fa;
+      --toggle-border: #d0d7de;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Navigation ── */
+    header {
+      background-color: var(--nav-bg);
+      color: var(--nav-text);
+      padding: 0 1.5rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      flex-shrink: 0;
+    }
+
+    .logo-fish {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .logo-text {
+      font-size: 1.125rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--nav-text);
+      text-decoration: none;
+      flex: 1;
+    }
+
+    .logo-text span {
+      opacity: 0.75;
+      font-weight: 400;
+    }
+
+    /* ── Theme toggle ── */
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background-color: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: var(--nav-text);
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .theme-toggle:hover, .theme-toggle:focus-visible {
+      background-color: rgba(255,255,255,0.22);
+      outline: none;
+    }
+
+    .theme-toggle svg { pointer-events: none; }
+
+    .icon-moon { display: block; }
+    .icon-sun  { display: none; }
+
+    [data-theme="light"] .icon-moon { display: none; }
+    [data-theme="light"] .icon-sun  { display: block; }
+
+    /* ── Main content ── */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .card {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 3rem 2rem 2.5rem;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+
+    /* ── 404 number ── */
+    .error-code {
+      font-size: 80px;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.5rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Fish illustration ── */
+    .fish-illustration {
+      margin: 1rem auto 1.25rem;
+      display: block;
+      animation: swim 4s ease-in-out infinite;
+    }
+
+    @keyframes swim {
+      0%   { transform: translateX(0px) rotate(0deg); }
+      25%  { transform: translateX(6px) rotate(1.5deg); }
+      50%  { transform: translateX(0px) rotate(0deg); }
+      75%  { transform: translateX(-6px) rotate(-1.5deg); }
+      100% { transform: translateX(0px) rotate(0deg); }
+    }
+
+    .card h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .card p {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      margin-bottom: 2rem;
+      max-width: 320px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ── Buttons ── */
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.6875rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      text-decoration: none;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+      width: 100%;
+    }
+
+    .btn-primary {
+      background-color: var(--btn-primary-bg);
+      color: #ffffff;
+      border-color: var(--btn-primary-bg);
+    }
+
+    .btn-primary:hover, .btn-primary:focus-visible {
+      background-color: var(--btn-primary-hover);
+      border-color: var(--btn-primary-hover);
+      outline: none;
+    }
+
+    /* ── Home link ── */
+    .home-link {
+      display: inline-block;
+      color: var(--accent);
+      font-size: 0.9rem;
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.15s ease;
+    }
+
+    .home-link:hover, .home-link:focus-visible {
+      border-bottom-color: var(--accent);
+      outline: none;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <!-- Fish SVG logo -->
+    <svg class="logo-fish" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M28 16c0 0-4-8-12-8C8 8 2 16 2 16s6 8 14 8c8 0 12-8 12-8z" fill="#5DADE2" opacity="0.9"/>
+      <ellipse cx="18" cy="16" rx="7" ry="5.5" fill="#85C1E9"/>
+      <path d="M28 10l3-3v6l-3-3z" fill="#5DADE2"/>
+      <path d="M28 22l3 3v-6l-3 3z" fill="#5DADE2"/>
+      <circle cx="21" cy="14.5" r="1.25" fill="#1A2A3A"/>
+      <circle cx="21.45" cy="14.1" r="0.4" fill="#ffffff"/>
+    </svg>
+    <a href="index.html" class="logo-text">PondMaster <span>Farm</span></a>
+
+    <!-- Theme toggle -->
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle colour theme">
+      <!-- Moon (shown in dark mode) -->
+      <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           aria-hidden="true">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+      <!-- Sun (shown in light mode) -->
+      <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           aria-hidden="true">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/>
+        <line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/>
+        <line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+    </button>
+  </header>
+
+  <main>
+    <div class="card">
+
+      <!-- 404 number -->
+      <div class="error-code" aria-label="Error 404">404</div>
+
+      <!-- Fish swimming illustration -->
+      <svg class="fish-illustration" width="120" height="70" viewBox="0 0 120 70"
+           fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <!-- Bubbles -->
+        <circle cx="96" cy="18" r="3" fill="#2980B9" opacity="0.35"/>
+        <circle cx="105" cy="10" r="2" fill="#2980B9" opacity="0.25"/>
+        <circle cx="100" cy="6" r="1.5" fill="#2980B9" opacity="0.2"/>
+        <!-- Body -->
+        <path d="M85 35 C70 20 35 22 15 35 C35 48 70 50 85 35Z" fill="#5DADE2"/>
+        <!-- Belly highlight -->
+        <ellipse cx="50" cy="35" rx="22" ry="9" fill="#85C1E9" opacity="0.6"/>
+        <!-- Tail -->
+        <path d="M85 25 L102 14 L102 56 L85 45 Z" fill="#2980B9"/>
+        <!-- Tail highlight -->
+        <path d="M85 32 L98 24 L98 46 L85 38 Z" fill="#5DADE2" opacity="0.5"/>
+        <!-- Dorsal fin -->
+        <path d="M55 22 C60 10 72 10 75 22" fill="#2980B9" opacity="0.7"/>
+        <!-- Eye -->
+        <circle cx="26" cy="33" r="4.5" fill="#1A2A3A"/>
+        <circle cx="24.8" cy="31.8" r="1.4" fill="#ffffff"/>
+        <!-- Mouth -->
+        <path d="M14 36 Q11 38 14 39" stroke="#1A5276" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+        <!-- Scale lines -->
+        <path d="M60 26 Q62 35 60 44" stroke="#2980B9" stroke-width="0.8" opacity="0.4" fill="none"/>
+        <path d="M48 25 Q50 35 48 45" stroke="#2980B9" stroke-width="0.8" opacity="0.4" fill="none"/>
+        <path d="M72 27 Q74 35 72 43" stroke="#2980B9" stroke-width="0.8" opacity="0.4" fill="none"/>
+        <!-- Water ripple -->
+        <ellipse cx="50" cy="62" rx="38" ry="4" fill="#2980B9" opacity="0.12"/>
+      </svg>
+
+      <h1>Something smells fishy...</h1>
+      <p>This page swam away. It might have been moved or deleted.</p>
+
+      <!-- Actions -->
+      <div class="btn-group">
+        <a href="dashboard.html" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          Back to Dashboard
+        </a>
+      </div>
+
+      <a href="index.html" class="home-link">
+        &larr; Return to Home
+      </a>
+
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2026 PondMaster &mdash; Page Not Found
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var html = document.documentElement;
+      var btn  = document.getElementById('theme-toggle');
+
+      /* Restore saved preference */
+      try {
+        var saved = localStorage.getItem('pm_theme');
+        if (saved === 'light' || saved === 'dark') {
+          html.setAttribute('data-theme', saved);
+        }
+      } catch (e) {}
+
+      if (btn) {
+        btn.addEventListener('click', function () {
+          var current = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+          html.setAttribute('data-theme', current);
+          try { localStorage.setItem('pm_theme', current); } catch (e) {}
+        });
+      }
+    })();
+  </script>
+
+</body>
+</html>
